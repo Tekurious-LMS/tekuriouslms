@@ -18,6 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SidebarNavigation } from "./SidebarNavigation";
 
+import { Logo } from "@/components/ui/Logo";
+
 export function TopHeader() {
     const { setTheme, theme } = useTheme();
     const pathname = usePathname();
@@ -43,7 +45,7 @@ export function TopHeader() {
                         <SidebarNavigation mobile />
                     </SheetContent>
                 </Sheet>
-                <span className="font-bold text-lg">Tekurious</span>
+                <Logo />
             </div>
 
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">

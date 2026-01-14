@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/Logo";
 
 // In a real app, this would come from a context/store
 const MOCK_USER_ROLE = "Admin";
@@ -92,13 +93,12 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
         <div className={cn("flex flex-col h-full bg-sidebar border-r border-sidebar-border transition-all duration-300", mobile ? "w-full" : (collapsed ? "w-[70px]" : "w-64"))}>
             <div className={cn("flex items-center h-16 border-b border-sidebar-border", collapsed ? "justify-center px-0" : "px-6 justify-between")}>
                 <Link href="/" className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-                    <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground">
-                        TL
-                    </div>
-                    {!collapsed && (
-                        <h1 className="text-xl font-bold tracking-tight text-sidebar-foreground">
-                            Tekurious
-                        </h1>
+                    {collapsed ? (
+                        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground">
+                            TL
+                        </div>
+                    ) : (
+                        <Logo />
                     )}
                 </Link>
                 {!mobile && !collapsed && (

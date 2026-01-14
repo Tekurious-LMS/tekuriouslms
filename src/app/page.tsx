@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { useTheme } from "next-themes";
 import {
     ArrowRight,
     BookOpen,
@@ -15,20 +18,22 @@ import {
     School,
     ShieldCheck,
     UserCheck,
-    Globe
+    Globe,
+    Sun,
+    Moon
 } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LandingPage() {
+    const { setTheme, theme } = useTheme();
+
     return (
         <div className="flex flex-col min-h-screen">
             {/* Header */}
             <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-background sticky top-0 z-50">
                 <Link className="flex items-center justify-center gap-2" href="#">
-                    <div className="bg-primary text-primary-foreground p-1 rounded-md">
-                        <BookOpen className="h-6 w-6" />
-                    </div>
-                    <span className="font-bold text-xl tracking-tight">Tekurious LMS</span>
+                    <Logo />
                 </Link>
                 <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
                     <Link className="text-sm font-medium hover:text-primary transition-colors hidden sm:block" href="#features">
@@ -40,6 +45,16 @@ export default function LandingPage() {
                     <Link className="text-sm font-medium hover:text-primary transition-colors hidden sm:block" href="#immersive">
                         AR/VR
                     </Link>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                        className="mr-2"
+                    >
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        <span className="sr-only">Toggle theme</span>
+                    </Button>
                     <div className="flex items-center gap-2 ml-2">
                         <Link href="/login">
                             <Button variant="ghost" size="sm">Login</Button>

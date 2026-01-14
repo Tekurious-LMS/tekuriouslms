@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import { BookOpen, Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export function Footer() {
     return (
@@ -9,10 +8,7 @@ export function Footer() {
             <div className="container px-4 md:px-6 mx-auto grid md:grid-cols-4 gap-8">
                 <div className="space-y-4">
                     <Link className="flex items-center gap-2" href="/">
-                        <div className="bg-primary text-primary-foreground p-1 rounded-md">
-                            <BookOpen className="h-5 w-5" />
-                        </div>
-                        <span className="font-bold text-lg">Tekurious</span>
+                        <Logo />
                     </Link>
                     <p className="text-sm text-muted-foreground">
                         Empowering the next generation of learners with immersive technology.

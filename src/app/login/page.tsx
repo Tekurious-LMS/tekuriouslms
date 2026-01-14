@@ -6,16 +6,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LoginPage() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="px-6 h-16 flex items-center border-b bg-background">
         <Link className="flex items-center justify-center gap-2" href="/">
-          <div className="bg-primary text-primary-foreground p-1 rounded-md">
-            <BookOpen className="h-6 w-6" />
-          </div>
-          <span className="font-bold text-xl tracking-tight">Tekurious LMS</span>
+          <Logo width={140} />
         </Link>
       </header>
 
