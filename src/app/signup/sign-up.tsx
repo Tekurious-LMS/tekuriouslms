@@ -162,6 +162,15 @@ export default function SignUp() {
                                 return;
                             }
 
+                            // Validate password strength
+                            const strongPasswordRegex =
+                                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+                            if (!strongPasswordRegex.test(password)) {
+                                toast.error(
+                                    "Password must include uppercase and lowercase letters, a number, and a special character",
+                                );
+                                return;
+                            }
                             let imageBase64 = "";
                             if (image) {
                                 try {
