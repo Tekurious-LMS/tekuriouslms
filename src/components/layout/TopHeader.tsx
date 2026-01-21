@@ -3,7 +3,7 @@
 import { Bell, Menu, Moon, Search, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -17,12 +17,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SidebarNavigation } from "./SidebarNavigation";
-
 import { Logo } from "@/components/ui/Logo";
+import { useTenant } from "@/contexts/TenantContext";
+import { signOut } from "@/lib/auth-client";
 
 export function TopHeader() {
     const { setTheme, theme } = useTheme();
     const pathname = usePathname();
+    const router = useRouter();
+    const { currentUser, currentSchool, currentRole } = useTenant();
 
     // Simple breadcrumb logic
     const pathSegments = pathname.split("/").filter((segment) => segment);
@@ -30,6 +33,17 @@ export function TopHeader() {
         const href = "/" + pathSegments.slice(0, index + 1).join("/");
         return { label: segment.charAt(0).toUpperCase() + segment.slice(1), href };
     });
+
+    // Get user initials for avatar
+    const getInitials = (name: string | null) => {
+        if (!name) return "U";
+        return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    };
+
+    const handleLogout = async () => {
+        await signOut();
+        router.push("/");
+    };
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6 shadow-sm">
@@ -52,6 +66,12 @@ export function TopHeader() {
                 <Link href="/" className="hover:text-foreground transition-colors">
                     Home
                 </Link>
+                {currentSchool && (
+                    <>
+                        <span>/</span>
+                        <span className="font-medium text-foreground">{currentSchool.name}</span>
+                    </>
+                )}
                 {breadcrumbs.map((crumb) => (
                     <div key={crumb.href} className="flex items-center gap-2">
                         <span>/</span>
@@ -97,28 +117,44 @@ export function TopHeader() {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                             <Avatar className="h-9 w-9">
-                                <AvatarImage src="/avatars/01.png" alt="@user" />
-                                <AvatarFallback>AD</AvatarFallback>
+                                <AvatarImage src={currentUser?.image || undefined} alt={currentUser?.name || "User"} />
+                                <AvatarFallback>{getInitials(currentUser?.name || null)}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal">
                             <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">Alice Admin</p>
+                                <p className="text-sm font-medium leading-none">{currentUser?.name || "User"}</p>
                                 <p className="text-xs leading-none text-muted-foreground">
-                                    alice@tekurious.com
+                                    {currentUser?.email || ""}
                                 </p>
+                                {currentRole && (
+                                    <p className="text-xs leading-none text-primary font-medium mt-1">
+                                        {currentRole}
+                                    </p>
+                                )}
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <User className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
+                        <DropdownMenuItem asChild>
+                            <Link href="/profile" className="cursor-pointer">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>Profile</span>
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Settings</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/settings" className="cursor-pointer">
+                                Settings
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500 font-medium">Log out</DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="text-red-500 font-medium cursor-pointer"
+                            onClick={handleLogout}
+                        >
+                            Log out
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

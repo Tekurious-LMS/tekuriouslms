@@ -4,10 +4,9 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -15,15 +14,77 @@ datasource db {
 }
 
 ////////////////////////////
+// BETTER AUTH TABLES
+////////////////////////////
+
+model user {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  image         String?
+
+  sessions session[]
+  accounts account[]
+
+  // Link to LMS User model
+  lmsUser LmsUser? @relation("BetterAuthUser")
+}
+
+model session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+////////////////////////////
 // USER & ACCESS CONTROL
 ////////////////////////////
 
-model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String
-  email      String   @unique
-  phone      String?
-  createdAt  DateTime @default(now())
+model LmsUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+
+  // Link to Better Auth user
+  betterAuthUserId String? @unique
+  betterAuthUser   user?   @relation("BetterAuthUser", fields: [betterAuthUserId], references: [id])
 
   roles       UserRole[]
   enrollments Enrollment[]
@@ -32,13 +93,15 @@ model User {
   rankings    Ranking[]
 
   coursesCreated Course[] @relation("CourseCreator")
+
+  @@map("User")
 }
 
 model Role {
   id       String @id @default(uuid()) @db.Uuid
   roleName String
 
-  users    UserRole[]
+  users UserRole[]
 }
 
 model UserRole {
@@ -46,8 +109,8 @@ model UserRole {
   userId String @db.Uuid
   roleId String @db.Uuid
 
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
+  lmsUser LmsUser @relation(fields: [userId], references: [id])
+  role    Role    @relation(fields: [roleId], references: [id])
 }
 
 ////////////////////////////
@@ -55,59 +118,59 @@ model UserRole {
 ////////////////////////////
 
 model Board {
-  id      String @id @default(uuid()) @db.Uuid
-  name    String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
 
   schools School[]
 }
 
 model School {
-  id        String @id @default(uuid()) @db.Uuid
-  name      String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
 
-  boardId   String @db.Uuid
-  board     Board  @relation(fields: [boardId], references: [id])
+  boardId String @db.Uuid
+  board   Board  @relation(fields: [boardId], references: [id])
 
   classes       Class[]
   subscriptions Subscription[]
 }
 
 model Class {
-  id        String @id @default(uuid()) @db.Uuid
-  name      String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
 
-  schoolId  String @db.Uuid
-  school    School @relation(fields: [schoolId], references: [id])
+  schoolId String @db.Uuid
+  school   School @relation(fields: [schoolId], references: [id])
 
-  subjects  Subject[]
+  subjects Subject[]
 }
 
 model Subject {
-  id        String @id @default(uuid()) @db.Uuid
-  name      String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
 
-  classId   String @db.Uuid
-  class     Class  @relation(fields: [classId], references: [id])
+  classId String @db.Uuid
+  class   Class  @relation(fields: [classId], references: [id])
 
-  chapters  Chapter[]
-  courses   Course[]
+  chapters Chapter[]
+  courses  Course[]
 }
 
 model Chapter {
-  id        String @id @default(uuid()) @db.Uuid
-  name      String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
 
-  subjectId String @db.Uuid
+  subjectId String  @db.Uuid
   subject   Subject @relation(fields: [subjectId], references: [id])
 
-  topics    Topic[]
+  topics Topic[]
 }
 
 model Topic {
-  id        String @id @default(uuid()) @db.Uuid
-  name      String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
 
-  chapterId String @db.Uuid
+  chapterId String  @db.Uuid
   chapter   Chapter @relation(fields: [chapterId], references: [id])
 }
 
@@ -116,29 +179,29 @@ model Topic {
 ////////////////////////////
 
 model Course {
-  id          String @id @default(uuid()) @db.Uuid
-  title       String
+  id    String @id @default(uuid()) @db.Uuid
+  title String
 
-  subjectId   String @db.Uuid
-  subject     Subject @relation(fields: [subjectId], references: [id])
+  subjectId String  @db.Uuid
+  subject   Subject @relation(fields: [subjectId], references: [id])
 
-  createdById String @db.Uuid
-  createdBy   User   @relation("CourseCreator", fields: [createdById], references: [id])
+  createdById String  @db.Uuid
+  createdBy   LmsUser @relation("CourseCreator", fields: [createdById], references: [id])
 
   enrollments Enrollment[]
   assessments Assessment[]
 }
 
 model Enrollment {
-  id        String @id @default(uuid()) @db.Uuid
-  progress  Float
-  status    String
+  id       String @id @default(uuid()) @db.Uuid
+  progress Float
+  status   String
 
-  userId    String @db.Uuid
-  user      User   @relation(fields: [userId], references: [id])
+  userId  String  @db.Uuid
+  lmsUser LmsUser @relation(fields: [userId], references: [id])
 
-  courseId  String @db.Uuid
-  course    Course @relation(fields: [courseId], references: [id])
+  courseId String @db.Uuid
+  course   Course @relation(fields: [courseId], references: [id])
 }
 
 ////////////////////////////
@@ -150,21 +213,21 @@ model Assessment {
   title      String
   totalMarks Int
 
-  courseId   String @db.Uuid
-  course     Course @relation(fields: [courseId], references: [id])
+  courseId String @db.Uuid
+  course   Course @relation(fields: [courseId], references: [id])
 
-  attempts   Attempt[]
+  attempts Attempt[]
 }
 
 model Attempt {
-  id            String @id @default(uuid()) @db.Uuid
-  score         Int
+  id    String @id @default(uuid()) @db.Uuid
+  score Int
 
-  assessmentId  String @db.Uuid
-  assessment    Assessment @relation(fields: [assessmentId], references: [id])
+  assessmentId String     @db.Uuid
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
 
-  userId        String @db.Uuid
-  user          User @relation(fields: [userId], references: [id])
+  userId  String  @db.Uuid
+  lmsUser LmsUser @relation(fields: [userId], references: [id])
 }
 
 ////////////////////////////
@@ -176,17 +239,17 @@ model StudentAnalytics {
   avgScore   Float
   weakTopics String
 
-  userId     String @unique @db.Uuid
-  user       User @relation(fields: [userId], references: [id])
+  userId  String  @unique @db.Uuid
+  lmsUser LmsUser @relation(fields: [userId], references: [id])
 }
 
 model Ranking {
-  id      String @id @default(uuid()) @db.Uuid
-  scope   String
-  rank    Int
+  id    String @id @default(uuid()) @db.Uuid
+  scope String
+  rank  Int
 
-  userId  String @db.Uuid
-  user    User @relation(fields: [userId], references: [id])
+  userId  String  @db.Uuid
+  lmsUser LmsUser @relation(fields: [userId], references: [id])
 }
 
 ////////////////////////////
@@ -194,21 +257,21 @@ model Ranking {
 ////////////////////////////
 
 model Subscription {
-  id        String @id @default(uuid()) @db.Uuid
-  planName  String
-  status    String
+  id       String @id @default(uuid()) @db.Uuid
+  planName String
+  status   String
 
-  schoolId  String @db.Uuid
-  school    School @relation(fields: [schoolId], references: [id])
+  schoolId String @db.Uuid
+  school   School @relation(fields: [schoolId], references: [id])
 
-  payments  Payment[]
+  payments Payment[]
 }
 
 model Payment {
-  id             String @id @default(uuid()) @db.Uuid
-  amount         Float
-  status         String
+  id     String @id @default(uuid()) @db.Uuid
+  amount Float
+  status String
 
-  subscriptionId String @db.Uuid
+  subscriptionId String       @db.Uuid
   subscription   Subscription @relation(fields: [subscriptionId], references: [id])
 }

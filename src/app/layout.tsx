@@ -3,6 +3,7 @@ import { Geist, Noto_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { TenantProvider } from "@/contexts/TenantContext";
 
 const notoSans = Noto_Sans({ variable: '--font-sans', subsets: ["latin"] });
 
@@ -55,10 +56,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TenantProvider>
+            {children}
+          </TenantProvider>
         </ThemeProvider>
         <Analytics />
       </body>
     </html>
   );
 }
+

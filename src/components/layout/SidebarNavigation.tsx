@@ -21,9 +21,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/Logo";
-
-// In a real app, this would come from a context/store
-const MOCK_USER_ROLE = "Admin";
+import { useTenant } from "@/contexts/TenantContext";
+import { signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
     mobile?: boolean;
@@ -33,13 +33,22 @@ interface SidebarProps {
 
 export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: SidebarProps) {
     const pathname = usePathname();
+    const { currentRole, currentSchool } = useTenant();
+    const router = useRouter();
+
+    // Get role-specific dashboard path
+    const getDashboardPath = () => {
+        if (!currentRole) return "/dashboard";
+        const role = currentRole.toLowerCase();
+        return `/${role}/dashboard`;
+    };
 
     const routes = [
         {
             label: "Dashboard",
             icon: LayoutDashboard,
-            href: "/dashboard",
-            roles: ["Admin", "Teacher", "Student"],
+            href: getDashboardPath(),
+            roles: ["Admin", "Teacher", "Student", "Parent"],
         },
         {
             label: "User Management",
@@ -86,7 +95,7 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
     ];
 
     const filteredRoutes = routes.filter((route) =>
-        route.roles.includes(MOCK_USER_ROLE)
+        currentRole && route.roles.includes(currentRole)
     );
 
     return (
@@ -113,6 +122,14 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
                     <Button variant="ghost" size="icon" onClick={toggleCollapse} className="h-8 w-8 text-sidebar-foreground">
                         <PanelLeftOpen className="h-4 w-4" />
                     </Button>
+                </div>
+            )}
+
+            {/* School Name Display */}
+            {!collapsed && currentSchool && (
+                <div className="px-4 py-3 border-b border-sidebar-border">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">School</p>
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">{currentSchool.name}</p>
                 </div>
             )}
 
@@ -163,7 +180,14 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
             </div>
 
             <div className="mt-auto p-4 border-t border-sidebar-border">
-                <Button variant="ghost" className={cn("w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground", collapsed && "justify-center px-0")}>
+                <Button
+                    variant="ghost"
+                    className={cn("w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground", collapsed && "justify-center px-0")}
+                    onClick={async () => {
+                        await signOut();
+                        router.push("/");
+                    }}
+                >
                     <LogOut className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-3")} />
                     {!collapsed && "Logout"}
                 </Button>
