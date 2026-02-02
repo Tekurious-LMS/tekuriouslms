@@ -222,24 +222,20 @@ export default async function AdminDashboard() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Class Configuration</CardTitle>
-                                <CardDescription>Manage grades, sections, and subjects</CardDescription>
+                                <CardDescription>Manage grades, subjects, and curriculum mapping</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                                <Link href="/admin/structure" className="block">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer group">
                                         <div className="flex items-center gap-3">
-                                            <Building2 className="h-5 w-5 text-muted-foreground" />
-                                            <span className="font-medium">Grades & Sections</span>
+                                            <Building2 className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                            <span className="font-medium">Manage Structure</span>
                                         </div>
                                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                     </div>
-                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
-                                        <div className="flex items-center gap-3">
-                                            <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                                            <span className="font-medium">Subjects Catalog</span>
-                                        </div>
-                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                    </div>
+                                </Link>
+                                <div className="p-3 rounded-lg border border-dashed text-sm text-muted-foreground">
+                                    <p>Configure Organization → Classes → Subjects hierarchy.</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -253,8 +249,8 @@ export default async function AdminDashboard() {
                                 <p className="text-sm text-muted-foreground mb-4">
                                     Departments help organize teachers and subjects together.
                                 </p>
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link href="/departments">Manage Departments</Link>
+                                <Button variant="outline" size="sm" disabled>
+                                    Manage Departments (Phase 2)
                                 </Button>
                             </CardContent>
                         </Card>
