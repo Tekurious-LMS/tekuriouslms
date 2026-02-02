@@ -112,7 +112,7 @@ export default async function TeacherDashboard() {
     ];
 
     return (
-        <div className="w-full min-h-screen bg-background">
+        <div className="w-full min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* 1. TEACHING OVERVIEW SECTION */}
@@ -127,17 +127,13 @@ export default async function TeacherDashboard() {
                             </p>
                         </div>
                         <div className="flex gap-3">
-                            <Button variant="outline" asChild>
-                                <Link href="/assessments/create">
-                                    <GraduationCap className="mr-2 h-4 w-4" />
-                                    New Assessment
-                                </Link>
+                            <Button variant="outline" disabled>
+                                <GraduationCap className="mr-2 h-4 w-4" />
+                                New Assessment
                             </Button>
-                            <Button asChild>
-                                <Link href="/courses/create">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Create Course
-                                </Link>
+                            <Button disabled>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create Course
                             </Button>
                         </div>
                     </div>
@@ -198,8 +194,8 @@ export default async function TeacherDashboard() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">My Courses</h2>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/courses">View All</Link>
+                        <Button variant="ghost" size="sm" disabled>
+                            View All
                         </Button>
                     </div>
 
@@ -238,11 +234,8 @@ export default async function TeacherDashboard() {
                                                 <span className="text-muted-foreground">{course.completion}% avg</span>
                                             )}
                                         </div>
-                                        <Button className="w-full" variant="outline" asChild>
-                                            <Link href={`/courses/${course.id}/manage`}>
-                                                Manage Course
-                                                <ArrowRight className="ml-2 h-4 w-4" />
-                                            </Link>
+                                        <Button className="w-full" variant="outline" disabled>
+                                            Manage Course
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -256,11 +249,9 @@ export default async function TeacherDashboard() {
                                 <p className="text-sm text-muted-foreground max-w-sm mb-4">
                                     Start creating your first course to share knowledge with students.
                                 </p>
-                                <Button asChild>
-                                    <Link href="/courses/create">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Create Your First Course
-                                    </Link>
+                                <Button disabled>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create Your First Course
                                 </Button>
                             </CardContent>
                         </Card>
@@ -273,60 +264,57 @@ export default async function TeacherDashboard() {
 
                     <div className="grid md:grid-cols-3 gap-4">
                         {/* Create New Course */}
-                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
-                            <Link href="/courses/create">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <Plus className="h-8 w-8 text-primary" />
+                        <Card className="border-border opacity-70">
+                            <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                <div className="p-4 rounded-xl bg-muted transition-colors">
+                                    <Plus className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h3 className="font-semibold transition-colors">Create New Course</h3>
+                                        <Badge variant="outline" className="text-[10px]">Soon</Badge>
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            Create New Course
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Start a new course with modules and lessons
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        Start a new course with modules and lessons
+                                    </p>
+                                </div>
+                            </CardContent>
                         </Card>
 
                         {/* Add Module/Lesson */}
-                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
-                            <Link href="/courses/add-lesson">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <FolderPlus className="h-8 w-8 text-primary" />
+                        <Card className="border-border opacity-70">
+                            <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                <div className="p-4 rounded-xl bg-muted transition-colors">
+                                    <FolderPlus className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h3 className="font-semibold transition-colors">Add Module/Lesson</h3>
+                                        <Badge variant="outline" className="text-[10px]">Soon</Badge>
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            Add Module/Lesson
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Add content to your existing courses
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        Add content to your existing courses
+                                    </p>
+                                </div>
+                            </CardContent>
                         </Card>
 
                         {/* Upload Content */}
-                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
-                            <Link href="/courses/upload-content">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <Upload className="h-8 w-8 text-primary" />
+                        <Card className="border-border opacity-70">
+                            <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                <div className="p-4 rounded-xl bg-muted transition-colors">
+                                    <Upload className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h3 className="font-semibold transition-colors">Upload Content</h3>
+                                        <Badge variant="outline" className="text-[10px]">Soon</Badge>
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            Upload Content
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Add PDFs, videos, and other materials
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        Add PDFs, videos, and other materials
+                                    </p>
+                                </div>
+                            </CardContent>
                         </Card>
                     </div>
                 </div>
@@ -335,8 +323,8 @@ export default async function TeacherDashboard() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">Assessments</h2>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/assessments">View All</Link>
+                        <Button variant="ghost" size="sm" disabled>
+                            View All
                         </Button>
                     </div>
 
@@ -367,8 +355,8 @@ export default async function TeacherDashboard() {
                                                         </div>
                                                         {assessment.pending > 0 && (
                                                             <div className="flex items-center gap-1 text-xs">
-                                                                <Clock className="h-3 w-3 text-orange-500" />
-                                                                <span className="text-orange-500">
+                                                                <Clock className="h-3 w-3 text-amber-600 dark:text-amber-500" />
+                                                                <span className="text-amber-600 dark:text-amber-500">
                                                                     {assessment.pending} pending
                                                                 </span>
                                                             </div>
@@ -377,15 +365,11 @@ export default async function TeacherDashboard() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Button size="sm" variant="outline" asChild>
-                                                    <Link href={`/assessments/${assessment.id}/submissions`}>
-                                                        View Submissions
-                                                    </Link>
+                                                <Button size="sm" variant="outline" disabled>
+                                                    View Submissions
                                                 </Button>
-                                                <Button size="sm" asChild>
-                                                    <Link href={`/assessments/${assessment.id}/scores`}>
-                                                        View Scores
-                                                    </Link>
+                                                <Button size="sm" disabled>
+                                                    View Scores
                                                 </Button>
                                             </div>
                                         </div>
@@ -401,11 +385,9 @@ export default async function TeacherDashboard() {
                                 <p className="text-sm text-muted-foreground max-w-sm mb-4">
                                     Create MCQ-based assessments to evaluate student understanding.
                                 </p>
-                                <Button asChild>
-                                    <Link href="/assessments/create">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Create MCQ Assessment
-                                    </Link>
+                                <Button disabled>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create MCQ Assessment
                                 </Button>
                             </CardContent>
                         </Card>

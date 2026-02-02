@@ -74,7 +74,7 @@ export default async function AdminDashboard() {
     ];
 
     return (
-        <div className="w-full min-h-screen bg-background">
+        <div className="w-full min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* 1. ORGANIZATION OVERVIEW SECTION */}
@@ -89,17 +89,13 @@ export default async function AdminDashboard() {
                             </p>
                         </div>
                         <div className="flex gap-3">
-                            <Button variant="outline" asChild>
-                                <Link href="/settings">
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    Settings
-                                </Link>
+                            <Button variant="outline" disabled>
+                                <Settings className="mr-2 h-4 w-4" />
+                                Settings
                             </Button>
-                            <Button asChild>
-                                <Link href="/users/invite">
-                                    <UserPlus className="mr-2 h-4 w-4" />
-                                    Invite Users
-                                </Link>
+                            <Button disabled>
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Invite Users
                             </Button>
                         </div>
                     </div>
@@ -160,58 +156,55 @@ export default async function AdminDashboard() {
                 <div className="space-y-4">
                     <h2 className="text-2xl font-semibold">User Management</h2>
                     <div className="grid md:grid-cols-3 gap-4">
-                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
-                            <Link href="/users/invite">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <UserPlus className="h-8 w-8 text-primary" />
+                        <Card className="border-border opacity-70">
+                            <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                <div className="p-4 rounded-xl bg-muted transition-colors">
+                                    <UserPlus className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h3 className="font-semibold transition-colors">Invite Users</h3>
+                                        <Badge variant="outline" className="text-[10px]">Soon</Badge>
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            Invite Users
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Add new students, teachers, or staff
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        Add new students, teachers, or staff
+                                    </p>
+                                </div>
+                            </CardContent>
                         </Card>
 
-                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
-                            <Link href="/users">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <Users className="h-8 w-8 text-primary" />
+                        <Card className="border-border opacity-70">
+                            <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                <div className="p-4 rounded-xl bg-muted transition-colors">
+                                    <Users className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h3 className="font-semibold transition-colors">View Directory</h3>
+                                        <Badge variant="outline" className="text-[10px]">Soon</Badge>
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            View Directory
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Manage roles and user status
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        Manage roles and user status
+                                    </p>
+                                </div>
+                            </CardContent>
                         </Card>
 
-                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
-                            <Link href="/users/approvals">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <Shield className="h-8 w-8 text-primary" />
+                        <Card className="border-border opacity-70">
+                            <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                <div className="p-4 rounded-xl bg-muted transition-colors">
+                                    <Shield className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <h3 className="font-semibold transition-colors">Access Control</h3>
+                                        <Badge variant="outline" className="text-[10px]">Soon</Badge>
                                     </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                                            Access Control
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            Review permissions and requests
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        Review permissions and requests
+                                    </p>
+                                </div>
+                            </CardContent>
                         </Card>
                     </div>
                 </div>
@@ -340,8 +333,8 @@ export default async function AdminDashboard() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">Audit Logs</h2>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/audit-logs">View All</Link>
+                        <Button variant="ghost" size="sm" disabled>
+                            View All
                         </Button>
                     </div>
                     <Card>

@@ -69,7 +69,7 @@ export default async function StudentDashboard() {
     ];
 
     return (
-        <div className="w-full min-h-screen bg-background">
+        <div className="w-full min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* 1. WELCOME / OVERVIEW SECTION */}
@@ -141,8 +141,8 @@ export default async function StudentDashboard() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">My Courses</h2>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/courses">View All</Link>
+                        <Button variant="ghost" size="sm" disabled>
+                            View All
                         </Button>
                     </div>
 
@@ -176,11 +176,9 @@ export default async function StudentDashboard() {
                                                 {course.completedLessons} of {course.totalLessons} lessons completed
                                             </p>
                                         </div>
-                                        <Button className="w-full" asChild>
-                                            <Link href={`/courses/${course.id}`}>
-                                                Continue Learning
-                                                <ArrowRight className="ml-2 h-4 w-4" />
-                                            </Link>
+                                        <Button className="w-full" disabled>
+                                            Continue Learning
+                                            <ArrowRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -227,11 +225,9 @@ export default async function StudentDashboard() {
                                             </div>
                                         </div>
                                     </div>
-                                    <Button size="lg" asChild>
-                                        <Link href="/courses/1/lessons/current">
-                                            Resume Learning
-                                            <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Link>
+                                    <Button size="lg" disabled>
+                                        Resume Learning
+                                        <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </div>
                             </CardContent>
@@ -309,8 +305,8 @@ export default async function StudentDashboard() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">Upcoming Assessments</h2>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/assessments">View All</Link>
+                        <Button variant="ghost" size="sm" disabled>
+                            View All
                         </Button>
                     </div>
 
@@ -340,10 +336,8 @@ export default async function StudentDashboard() {
                                                     {assessment.status === "pending" ? "Pending" : "Completed"}
                                                 </Badge>
                                                 {assessment.status === "pending" && (
-                                                    <Button size="sm" asChild>
-                                                        <Link href={`/assessments/${assessment.id}`}>
-                                                            Attempt
-                                                        </Link>
+                                                    <Button size="sm" disabled>
+                                                        Attempt
                                                     </Button>
                                                 )}
                                             </div>
