@@ -117,16 +117,16 @@ function StudentView() {
                         <Badge variant="outline" className="text-primary border-primary">Pre-Alpha</Badge>
                     </div>
                     <Card className="overflow-hidden relative group">
-                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent" />
                         <CardHeader>
-                            <Box className="h-8 w-8 text-blue-500 mb-2" />
+                            <Box className="h-8 w-8 text-primary mb-2" />
                             <CardTitle>Human Heart 3D</CardTitle>
                             <CardDescription>Biology • Class 10</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="aspect-video bg-slate-900 rounded-md flex items-center justify-center relative">
-                                <p className="text-slate-500 text-xs">3D Model Preview</p>
-                                <PlayCircle className="h-10 w-10 text-white/50 absolute" />
+                            <div className="aspect-video bg-muted rounded-md flex items-center justify-center relative">
+                                <p className="text-muted-foreground text-xs">3D Model Preview</p>
+                                <PlayCircle className="h-10 w-10 text-muted-foreground/50 absolute" />
                             </div>
                             <Button disabled className="w-full mt-4" variant="secondary">
                                 <Glasses className="mr-2 h-4 w-4" /> View in AR (Coming Soon)
@@ -208,7 +208,7 @@ function AdminView() {
                             {[1, 2, 3].map(i => (
                                 <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0">
                                     <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                        <div className="h-2 w-2 rounded-full bg-primary" />
                                         <p className="text-sm font-medium">User Rajesh edited Course Math-101</p>
                                     </div>
                                     <span className="text-xs text-muted-foreground">2 hrs ago</span>
@@ -245,7 +245,7 @@ function ParentView() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-600">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground">
                     A
                 </div>
                 <div>
@@ -276,7 +276,7 @@ function ParentView() {
                 <CardContent>
                     <div className="space-y-4">
                         <div className="flex gap-4 items-start">
-                            <AlertCircle className="h-5 w-5 text-blue-500 mt-1" />
+                            <AlertCircle className="h-5 w-5 text-primary mt-1" />
                             <div>
                                 <p className="text-sm font-medium">Math Assignment Due</p>
                                 <p className="text-xs text-muted-foreground">Aarav has a submission pending for Algebra due tomorrow.</p>

@@ -1,123 +1,153 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, TrendingUp, Calendar, BookOpen, Award } from "lucide-react";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { User, Bell, FileText, Calendar, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-export default function ParentDashboard() {
+export default async function ParentDashboard() {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session || (session.user as any).role?.toLowerCase() !== "parent") {
+        return <div className="p-8 text-center text-muted-foreground">Unauthorized access to Parent Dashboard</div>;
+    }
+
+    const userName = session.user.name || "Parent";
+
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Parent Dashboard</h1>
-                <p className="text-muted-foreground">
-                    Monitor your child's progress and academic performance
-                </p>
-            </div>
+        <div className="w-full min-h-screen bg-linear-to-br from-primary/5 via-background to-secondary/5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-            {/* Quick Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Overall Performance</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                            Parent Portal
+                        </h1>
+                        <p className="text-muted-foreground mt-2">
+                            Monitor your child's academic progress and stay updated.
+                        </p>
+                    </div>
+                    <Button variant="outline" size="icon">
+                        <Bell className="h-5 w-5" />
+                    </Button>
+                </div>
+
+                {/* Child Overview */}
+                <Card className="border-l-4 border-l-primary">
+                    <CardHeader className="pb-4">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle>Student Profile</CardTitle>
+                                <CardDescription>Current enrollment information</CardDescription>
+                            </div>
+                            <Badge>Active</Badge>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">85%</div>
-                        <p className="text-xs text-muted-foreground">+3% this month</p>
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl">
+                                SC
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg">Student Child</h3>
+                                <p className="text-sm text-muted-foreground">Class 10-A • Roll No. 24</p>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Attendance</CardTitle>
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">96%</div>
-                        <p className="text-xs text-muted-foreground">Excellent</p>
-                    </CardContent>
-                </Card>
+                {/* Main Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Overall Attendance</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">94%</div>
+                            <p className="text-xs text-muted-foreground mt-1 text-green-600">Present 4/5 days this week</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming Assignments</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">2</div>
+                            <p className="text-xs text-muted-foreground mt-1">Due within 3 days</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Recent Grade</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">A-</div>
+                            <p className="text-xs text-muted-foreground mt-1">Mathematics Mid-Term</p>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Courses</CardTitle>
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">6</div>
-                        <p className="text-xs text-muted-foreground">Enrolled</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Achievements</CardTitle>
-                        <Award className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-muted-foreground">This semester</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Main Content */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
-                    <CardHeader>
-                        <CardTitle>Performance Overview</CardTitle>
-                        <CardDescription>
-                            Subject-wise performance breakdown
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {[
-                                { subject: "Mathematics", score: 92, trend: "+5%" },
-                                { subject: "Physics", score: 88, trend: "+2%" },
-                                { subject: "Chemistry", score: 85, trend: "+3%" },
-                                { subject: "Biology", score: 90, trend: "+7%" },
-                            ].map((item, idx) => (
-                                <div key={idx} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-sm font-medium">{item.subject}</p>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-sm font-bold">{item.score}%</p>
-                                            <p className="text-xs text-green-600">{item.trend}</p>
+                {/* Notifications & Activity */}
+                <div className="grid md:grid-cols-2 gap-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-primary" />
+                                Recent Reports
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="space-y-4">
+                                {[
+                                    { title: "Mid-Term Report Card", date: "Jan 15, 2026", type: "Report" },
+                                    { title: "Physics Lab Evaluation", date: "Jan 10, 2026", type: "Grade" }
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center justify-between p-3 rounded-md bg-muted/40">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-sm">{item.title}</span>
+                                            <span className="text-xs text-muted-foreground">{item.date}</span>
                                         </div>
-                                    </div>
-                                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-primary transition-all"
-                                            style={{ width: `${item.score}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                                        <Button variant="ghost" size="sm">View</Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
 
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                        <CardDescription>Latest updates and achievements</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {[
-                                { activity: "Completed Physics Chapter 5", time: "2 hours ago" },
-                                { activity: "Scored 95% in Math Quiz", time: "Yesterday" },
-                                { activity: "Earned 'Quick Learner' badge", time: "2 days ago" },
-                            ].map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-4">
-                                    <div className="h-2 w-2 rounded-full bg-primary" />
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium">{item.activity}</p>
-                                        <p className="text-xs text-muted-foreground">{item.time}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-primary" />
+                                Upcoming Events
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="space-y-4">
+                                {[
+                                    { title: "Parent-Teacher Meeting", date: "Feb 05, 2026", time: "10:00 AM" },
+                                    { title: "Science Fair", date: "Feb 20, 2026", time: "09:00 AM" }
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-4 p-3 rounded-md border-l-2 border-primary bg-muted/40">
+                                        <div className="flex flex-col items-center justify-center p-2 bg-background rounded-md shadow-sm w-12 text-center">
+                                            <span className="text-xs font-bold uppercase text-muted-foreground">{item.date.split(" ")[0]}</span>
+                                            <span className="font-bold">{item.date.split(" ")[1].replace(",", "")}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-sm block">{item.title}</span>
+                                            <span className="text-xs text-muted-foreground">{item.time}</span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </div>
+
             </div>
         </div>
     );

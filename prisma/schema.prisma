@@ -25,6 +25,7 @@ model user {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   image         String?
+  role          String?  @default("Student") // Custom field for role-based auth
 
   sessions session[]
   accounts account[]

@@ -36,11 +36,13 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
     const { currentRole, currentSchool } = useTenant();
     const router = useRouter();
 
+    // Normalize role for comparison and path generation
+    const normalizedRole = currentRole ? currentRole.charAt(0).toUpperCase() + currentRole.slice(1).toLowerCase() : "";
+
     // Get role-specific dashboard path
     const getDashboardPath = () => {
-        if (!currentRole) return "/";
-        const role = currentRole.toLowerCase();
-        return `/${role}/dashboard`;
+        if (!normalizedRole) return "/";
+        return `/${normalizedRole.toLowerCase()}/dashboard`;
     };
 
     const routes = [
@@ -92,10 +94,37 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
             href: "/notices",
             roles: ["Admin", "Teacher", "Student"],
         },
+        {
+            label: "Practice",
+            icon: BookOpen,
+            href: "/practice",
+            roles: ["Student"],
+        },
+        {
+            label: "AR/VR Learning (Coming Soon)",
+            icon: Layers,
+            href: "#",
+            roles: ["Admin", "Teacher", "Student"],
+            disabled: true,
+        },
+        {
+            label: "AI Insights (Coming Soon)",
+            icon: BarChart3,
+            href: "#",
+            roles: ["Admin", "Teacher"],
+            disabled: true,
+        },
+        {
+            label: "Marketplace (Coming Soon)",
+            icon: LayoutDashboard,
+            href: "#",
+            roles: ["Admin"],
+            disabled: true,
+        },
     ];
 
     const filteredRoutes = routes.filter((route) =>
-        currentRole && route.roles.includes(currentRole)
+        normalizedRole && route.roles.includes(normalizedRole)
     );
 
     return (
@@ -140,23 +169,40 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
                     </div>
                 )}
 
-                {filteredRoutes.map((route) => (
-                    <Link
-                        key={route.href}
-                        href={route.href}
-                        className={cn(
-                            "group flex items-center px-3 py-2.5 mx-2 text-sm font-medium rounded-md transition-colors",
-                            pathname === route.href
-                                ? "bg-sidebar-accent text-sidebar-primary"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                            collapsed && "justify-center px-2"
-                        )}
-                        title={collapsed ? route.label : undefined}
-                    >
-                        <route.icon className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-3", pathname === route.href ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
-                        {!collapsed && <span>{route.label}</span>}
-                    </Link>
-                ))}
+                {filteredRoutes.map((route) => {
+                    if ((route as any).disabled) {
+                        return (
+                            <div
+                                key={route.label}
+                                className={cn(
+                                    "group flex items-center px-3 py-2.5 mx-2 text-sm font-medium rounded-md transition-colors text-muted-foreground/50 cursor-not-allowed",
+                                    collapsed && "justify-center px-2"
+                                )}
+                                title={collapsed ? route.label : undefined}
+                            >
+                                <route.icon className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-3")} />
+                                {!collapsed && <span>{route.label}</span>}
+                            </div>
+                        );
+                    }
+                    return (
+                        <Link
+                            key={route.href}
+                            href={route.href}
+                            className={cn(
+                                "group flex items-center px-3 py-2.5 mx-2 text-sm font-medium rounded-md transition-colors",
+                                pathname === route.href
+                                    ? "bg-sidebar-accent text-sidebar-primary"
+                                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                                collapsed && "justify-center px-2"
+                            )}
+                            title={collapsed ? route.label : undefined}
+                        >
+                            <route.icon className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-3", pathname === route.href ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
+                            {!collapsed && <span>{route.label}</span>}
+                        </Link>
+                    );
+                })}
 
                 {!collapsed && (
                     <div className="mt-8 mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
