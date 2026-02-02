@@ -1,11 +1,38 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Users, GraduationCap, Building2, Activity, Settings, AlertCircle, TrendingUp } from "lucide-react";
+import {
+    Users,
+    GraduationCap,
+    Building2,
+    Activity,
+    Settings,
+    AlertCircle,
+    TrendingUp,
+    Plus,
+    UserPlus,
+    FileText,
+    History,
+    Shield,
+    BarChart3,
+    CheckCircle2,
+    Calendar,
+    ArrowRight,
+    Cuboid
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 export default async function AdminDashboard() {
     const session = await auth.api.getSession({
@@ -18,114 +45,364 @@ export default async function AdminDashboard() {
 
     const userName = session.user.name || "Admin";
 
+    // Mock data - replace with actual API calls
+    const stats = {
+        totalStudents: 1240,
+        totalTeachers: 86,
+        activeCourses: 34,
+        adoptionRate: 78
+    };
+
+    const auditLogs = [
+        { id: 1, action: "Created new user", actor: "Admin User", role: "Admin", time: "2 mins ago" },
+        { id: 2, action: "Published 'Advanced Physics'", actor: "Sarah Jones", role: "Teacher", time: "1 hour ago" },
+        { id: 3, action: "Updated grade scaling", actor: "System", role: "System", time: "3 hours ago" },
+        { id: 4, action: "Added new class: Grade 10-B", actor: "Admin User", role: "Admin", time: "5 hours ago" },
+    ];
+
+    const recentAssignments = [
+        { id: 1, teacher: "Sarah Jones", type: "Class Assignment", target: "Grade 10-A", date: "Today" },
+        { id: 2, teacher: "Michael Brown", type: "Course Assignment", target: "Intro to Biology", date: "Yesterday" },
+        { id: 3, teacher: "Emily Davis", type: "Class Assignment", target: "Grade 11-C", date: "2 days ago" },
+    ];
+
+    const adoptionMetrics = [
+        { label: "Student Enrollment", value: 85, total: 100 },
+        { label: "Lesson Completion", value: 62, total: 100 },
+        { label: "Assessment Participation", value: 78, total: 100 },
+    ];
+
     return (
-        <div className="w-full min-h-screen bg-linear-to-br from-primary/5 via-background to-secondary/5">
+        <div className="w-full min-h-screen bg-background">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                            Admin Console
-                        </h1>
-                        <p className="text-muted-foreground mt-2">
-                            Overview of organization health, users, and system settings.
-                        </p>
+                {/* 1. ORGANIZATION OVERVIEW SECTION */}
+                <div className="space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                                Admin Console
+                            </h1>
+                            <p className="text-muted-foreground mt-2 text-lg">
+                                Overview of organization health, users, and system settings.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button variant="outline" asChild>
+                                <Link href="/settings">
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    Settings
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href="/users/invite">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Invite Users
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
-                    <Button asChild>
-                        <Link href="/users/invite">
-                            <Users className="mr-2 h-4 w-4" />
-                            Invite Users
-                        </Link>
-                    </Button>
-                </div>
 
-                {/* Quick Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                        { icon: Users, label: "Total Users", value: "2,450", color: "text-blue-500", bg: "bg-blue-500/10", change: "+12% this month" },
-                        { icon: GraduationCap, label: "Active Courses", value: "86", color: "text-green-500", bg: "bg-green-500/10", change: "+5 new courses" },
-                        { icon: Building2, label: "Departments", value: "12", color: "text-purple-500", bg: "bg-purple-500/10", change: "Stable" },
-                        { icon: Activity, label: "System Uptime", value: "99.9%", color: "text-emerald-500", bg: "bg-emerald-500/10", change: "Last 30 days" },
-                    ].map((stat, idx) => (
-                        <Card key={idx} className="border-border/60 shadow-xs hover:shadow-md transition-all">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className={`p-2 rounded-lg ${stat.bg}`}>
-                                        <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                                    </div>
-                                    <Badge variant="outline" className="text-xs">{stat.change}</Badge>
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="p-6 flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-primary/10">
+                                    <Users className="w-6 h-6 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                                    <p className="text-2xl font-bold">{stats.totalStudents}</p>
                                 </div>
                             </CardContent>
                         </Card>
-                    ))}
+
+                        <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="p-6 flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-primary/10">
+                                    <GraduationCap className="w-6 h-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Total Teachers</p>
+                                    <p className="text-2xl font-bold">{stats.totalTeachers}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="p-6 flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-primary/10">
+                                    <Building2 className="w-6 h-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Active Courses</p>
+                                    <p className="text-2xl font-bold">{stats.activeCourses}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="p-6 flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-primary/10">
+                                    <Activity className="w-6 h-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Adoption Rate</p>
+                                    <p className="text-2xl font-bold">{stats.adoptionRate}%</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
 
-                {/* Configuration & Management */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* User Management */}
-                    <Link href="/users" className="group block">
-                        <Card className="h-full hover:border-primary/50 transition-all cursor-pointer">
+                {/* 2. USER MANAGEMENT SECTION */}
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold">User Management</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
+                            <Link href="/users/invite">
+                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                        <UserPlus className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                                            Invite Users
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Add new students, teachers, or staff
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Link>
+                        </Card>
+
+                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
+                            <Link href="/users">
+                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                        <Users className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                                            View Directory
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Manage roles and user status
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Link>
+                        </Card>
+
+                        <Card className="border-border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer">
+                            <Link href="/users/approvals">
+                                <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                                    <div className="p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                        <Shield className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                                            Access Control
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            Review permissions and requests
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Link>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* 3. ACADEMIC STRUCTURE SECTION */}
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold">Academic Structure</h2>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-primary" />
-                                    User Management
-                                </CardTitle>
-                                <CardDescription>Manage students, teachers, and staff.</CardDescription>
+                                <CardTitle className="text-lg">Class Configuration</CardTitle>
+                                <CardDescription>Manage grades, sections, and subjects</CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Add/Remove Users</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Manage Roles</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Reset Passwords</li>
-                                </ul>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                                        <div className="flex items-center gap-3">
+                                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                                            <span className="font-medium">Grades & Sections</span>
+                                        </div>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                                        <div className="flex items-center gap-3">
+                                            <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                                            <span className="font-medium">Subjects Catalog</span>
+                                        </div>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
-                    </Link>
 
-                    {/* Academic Structure */}
-                    <Link href="/academic-structure" className="group block">
-                        <Card className="h-full hover:border-primary/50 transition-all cursor-pointer">
+                        <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Building2 className="w-5 h-5 text-primary" />
-                                    Academic Structure
-                                </CardTitle>
-                                <CardDescription>Configure classes, subjects, and periods.</CardDescription>
+                                <CardTitle className="text-lg">Department Settings</CardTitle>
+                                <CardDescription>Configure department heads and resources</CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Curriculum Management</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Class Schedules</li>
-                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary" /> Department Settings</li>
-                                </ul>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Departments help organize teachers and subjects together.
+                                </p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href="/departments">Manage Departments</Link>
+                                </Button>
                             </CardContent>
                         </Card>
-                    </Link>
+                    </div>
+                </div>
 
-                    {/* AR Analytics Placeholder */}
-                    <Card className="h-full border-dashed opacity-80">
+                {/* 4. TEACHER ASSIGNMENT SECTION */}
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold">Teacher Assignment</h2>
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Recent Assignments</CardTitle>
+                                    <CardDescription>Latest teacher allocations to classes and courses</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Teacher</TableHead>
+                                                <TableHead>Assignment Type</TableHead>
+                                                <TableHead>Target</TableHead>
+                                                <TableHead>Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {recentAssignments.map((assignment) => (
+                                                <TableRow key={assignment.id}>
+                                                    <TableCell className="font-medium">{assignment.teacher}</TableCell>
+                                                    <TableCell>{assignment.type}</TableCell>
+                                                    <TableCell>{assignment.target}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{assignment.date}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </div>
+                        <div className="space-y-4">
+                            <Card className="h-full">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Quick Assign</CardTitle>
+                                    <CardDescription>Allocate resources</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <Button className="w-full justify-start" variant="outline">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Assign to Class
+                                    </Button>
+                                    <Button className="w-full justify-start" variant="outline">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Assign to Course
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. PLATFORM ADOPTION METRICS */}
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold">Platform Adoption</h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {adoptionMetrics.map((metric, idx) => (
+                            <Card key={idx}>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                                        {metric.label}
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold mb-2">{metric.value}%</div>
+                                    <Progress value={metric.value} className="h-2" />
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Based on active user data
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 6. AUDIT LOGS SECTION */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-semibold">Audit Logs</h2>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="/audit-logs">View All</Link>
+                        </Button>
+                    </div>
+                    <Card>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Action</TableHead>
+                                        <TableHead>Actor</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead className="text-right">Time</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {auditLogs.map((log) => (
+                                        <TableRow key={log.id}>
+                                            <TableCell className="font-medium">{log.action}</TableCell>
+                                            <TableCell>{log.actor}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-xs">{log.role}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right text-muted-foreground">{log.time}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* 7. IMMERSIVE LEARNING (AR/VR) - PLACEHOLDER SECTION */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-semibold">Immersive Analytics</h2>
+                            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+                        </div>
+                    </div>
+
+                    <Card className="border-dashed border-2">
                         <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <CardTitle className="flex items-center gap-2 text-muted-foreground">
-                                    <TrendingUp className="w-5 h-5" />
-                                    AR/VR Analytics
-                                </CardTitle>
-                                <Badge variant="secondary">Coming Soon</Badge>
-                            </div>
-                            <CardDescription>Usage stats for immersive content.</CardDescription>
+                            <CardTitle className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                                AR/VR Usage Analytics
+                            </CardTitle>
+                            <CardDescription>
+                                Track engagement and learning outcomes from immersive content sessions. This feature is currently in development.
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex items-center justify-center h-32">
-                            <p className="text-sm text-muted-foreground text-center">
-                                Detailed analytics for AR/VR session engagement will appear here.
+                        <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground opacity-75">
+                            <BarChart3 className="h-16 w-16 mb-4 text-muted-foreground/30" />
+                            <p className="max-w-md">
+                                Visualize student performance in 3D labs, track VR session duration, and analyze interaction heatmaps.
                             </p>
                         </CardContent>
                     </Card>
                 </div>
+
             </div>
         </div>
     );
