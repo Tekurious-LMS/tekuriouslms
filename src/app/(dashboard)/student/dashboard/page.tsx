@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ARLearningSection } from "@/components/placeholders/ARLearningSection";
 
 export default async function StudentDashboard() {
     const session = await auth.api.getSession({
@@ -365,48 +366,7 @@ export default async function StudentDashboard() {
                 </div>
 
                 {/* 6. IMMERSIVE LEARNING (AR/VR) - PLACEHOLDER SECTION */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-semibold">Immersive Learning</h2>
-                            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                        </div>
-                    </div>
-
-                    <Card className="border-dashed border-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Cuboid className="h-5 w-5 text-muted-foreground" />
-                                AR/VR Learning Experiences
-                            </CardTitle>
-                            <CardDescription>
-                                Experience lessons in augmented and virtual reality. This feature is currently under development and will be available soon.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid md:grid-cols-3 gap-4">
-                                {arvrLessons.map((lesson) => (
-                                    <Card key={lesson.id} className="border-border opacity-75">
-                                        <CardContent className="p-4 space-y-3">
-                                            <div className="p-3 bg-muted rounded-lg w-fit">
-                                                <Cuboid className="h-6 w-6 text-muted-foreground" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-sm mb-1 text-muted-foreground">{lesson.title}</h4>
-                                                <p className="text-xs text-muted-foreground">{lesson.subject}</p>
-                                                <Badge variant="outline" className="text-xs mt-2">{lesson.type}</Badge>
-                                            </div>
-                                            <Button disabled variant="outline" className="w-full" size="sm">
-                                                <Cuboid className="mr-2 h-3 w-3" />
-                                                Launch AR/VR
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                <ARLearningSection />
 
             </div>
         </div>

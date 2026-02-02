@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ARCreationSection } from "@/components/placeholders/ARCreationSection";
+import { AIInsightsSection } from "@/components/placeholders/AIInsightsSection";
 
 export default async function TeacherDashboard() {
     const session = await auth.api.getSession({
@@ -465,48 +467,10 @@ export default async function TeacherDashboard() {
                     )}
                 </div>
 
-                {/* 6. IMMERSIVE LEARNING (AR/VR) - PLACEHOLDER SECTION */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-semibold">Immersive Learning</h2>
-                            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                        </div>
-                    </div>
-
-                    <Card className="border-dashed border-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Cuboid className="h-5 w-5 text-muted-foreground" />
-                                AR/VR Content Creation Studio
-                            </CardTitle>
-                            <CardDescription>
-                                Create immersive 3D lessons and interactive models for your students. This feature is currently under development.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid md:grid-cols-3 gap-4 mb-4">
-                                {arvrLessons.map((lesson) => (
-                                    <Card key={lesson.id} className="border-border opacity-75">
-                                        <CardContent className="p-4 space-y-3">
-                                            <div className="p-3 bg-muted rounded-lg w-fit">
-                                                <Cuboid className="h-6 w-6 text-muted-foreground" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-sm mb-1 text-muted-foreground">{lesson.title}</h4>
-                                                <p className="text-xs text-muted-foreground">{lesson.subject}</p>
-                                                <Badge variant="outline" className="text-xs mt-2">{lesson.type}</Badge>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                            <Button disabled variant="outline" className="w-full">
-                                <Cuboid className="mr-2 h-4 w-4" />
-                                Create AR/VR Lesson
-                            </Button>
-                        </CardContent>
-                    </Card>
+                {/* 6. IMMERSIVE LEARNING & AI SUPPORT (PHASE-2) */}
+                <div className="space-y-8">
+                    <ARCreationSection />
+                    <AIInsightsSection />
                 </div>
 
             </div>

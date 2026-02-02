@@ -26,13 +26,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-    Table,
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { ARAnalyticsSection } from "@/components/placeholders/ARAnalyticsSection";
+import { AIInsightsSection } from "@/components/placeholders/AIInsightsSection";
 
 export default async function AdminDashboard() {
     const session = await auth.api.getSession({
@@ -371,32 +372,10 @@ export default async function AdminDashboard() {
                     </Card>
                 </div>
 
-                {/* 7. IMMERSIVE LEARNING (AR/VR) - PLACEHOLDER SECTION */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-semibold">Immersive Analytics</h2>
-                            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                        </div>
-                    </div>
-
-                    <Card className="border-dashed border-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                                AR/VR Usage Analytics
-                            </CardTitle>
-                            <CardDescription>
-                                Track engagement and learning outcomes from immersive content sessions. This feature is currently in development.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground opacity-75">
-                            <BarChart3 className="h-16 w-16 mb-4 text-muted-foreground/30" />
-                            <p className="max-w-md">
-                                Visualize student performance in 3D labs, track VR session duration, and analyze interaction heatmaps.
-                            </p>
-                        </CardContent>
-                    </Card>
+                {/* 7. IMMERSIVE LEARNING & AI INSIGHTS (PHASE-2) */}
+                <div className="grid lg:grid-cols-2 gap-8">
+                    <ARAnalyticsSection />
+                    <AIInsightsSection />
                 </div>
 
             </div>
