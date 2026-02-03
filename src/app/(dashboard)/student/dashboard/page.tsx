@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ARLearningSection } from "@/components/placeholders/ARLearningSection";
 
 export default async function StudentDashboard() {
