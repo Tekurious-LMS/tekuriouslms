@@ -61,12 +61,6 @@ export default async function StudentDashboard() {
         { id: 3, name: "Newton's Laws Test", course: "Physics - Mechanics", dueDate: "Next week", status: "pending" },
     ];
 
-    const arvrLessons = [
-        { id: 1, title: "Explore the Solar System", subject: "Astronomy", type: "VR Experience" },
-        { id: 2, title: "Human Heart Anatomy", subject: "Biology", type: "AR Model" },
-        { id: 3, title: "Chemical Reactions Lab", subject: "Chemistry", type: "VR Lab" },
-    ];
-
     return (
         <div className="w-full min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
