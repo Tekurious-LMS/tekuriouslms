@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export default async function DashboardPage() {
+export async function redirectToDashboard() {
     const session = await auth.api.getSession({
         headers: await headers()
     });
