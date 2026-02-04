@@ -82,7 +82,7 @@ export default function SignIn() {
                                 email,
                                 password,
                                 rememberMe,
-                                callbackURL: "/dashboard",
+                                callbackURL: "/dashboard", // Redirector will handle role-based routing
                                 fetchOptions: {
                                     onRequest: () => {
                                         setLoading(true);
@@ -90,12 +90,12 @@ export default function SignIn() {
                                     onResponse: () => {
                                         setLoading(false);
                                     },
-                                    onError: (ctx) => {
+                                    onError: (ctx: any) => {
                                         toast.error(ctx.error.message || "Failed to sign in");
                                     },
                                     onSuccess: () => {
                                         toast.success("Signed in successfully!");
-                                        router.push("/dashboard");
+                                        router.push("/dashboard"); // Redirector will handle role-based routing
                                     },
                                 },
                             });
@@ -142,7 +142,13 @@ export default function SignIn() {
                 </div>
             </CardContent>
             <CardFooter>
-                <div className="flex justify-center w-full border-t py-4">
+                <div className="flex flex-col items-center w-full border-t py-4 gap-2">
+                    <p className="text-center text-sm text-muted-foreground">
+                        Don&apos;t have an account?{" "}
+                        <Link href="/signup" className="text-primary hover:underline font-medium">
+                            Create one
+                        </Link>
+                    </p>
                     <p className="text-center text-xs text-neutral-500">
                         built with{" "}
                         <Link

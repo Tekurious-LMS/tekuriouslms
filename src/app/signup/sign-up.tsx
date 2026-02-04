@@ -17,6 +17,7 @@ import { Loader2, X } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignUp() {
     const [firstName, setFirstName] = useState("");
@@ -26,6 +27,7 @@ export default function SignUp() {
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [role, setRole] = useState("");
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
@@ -145,6 +147,24 @@ export default function SignUp() {
                             </div>
                         </div>
                     </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="role">Role</Label>
+                        <select
+                            id="role"
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            required
+                        >
+                            <option value="" disabled>Select a role</option>
+                            <option value="Student">Student - Access learning materials</option>
+                            <option value="Teacher">Teacher - Manage courses and assessments</option>
+                            <option value="Parent">Parent - Monitor student progress</option>
+                            <option value="Admin">Admin - Manage school and users</option>
+                        </select>
+                    </div>
+
                     <Button
                         type="submit"
                         className="w-full"
@@ -180,13 +200,16 @@ export default function SignUp() {
                                     return;
                                 }
                             }
+                            // Store role in sessionStorage for post-signup processing
+                            if (role) {
+                                sessionStorage.setItem("pendingRole", role);
+                            }
 
                             await signUp.email({
                                 email,
                                 password,
                                 name: `${firstName} ${lastName}`,
-                                image: imageBase64,
-                                callbackURL: "/dashboard",
+                                callbackURL: "/onboarding",
                                 fetchOptions: {
                                     onResponse: () => {
                                         setLoading(false);
@@ -194,12 +217,18 @@ export default function SignUp() {
                                     onRequest: () => {
                                         setLoading(true);
                                     },
-                                    onError: (ctx) => {
-                                        toast.error(ctx.error.message);
+                                    onError: (ctx: any) => {
+                                        console.error("Sign-up error:", ctx.error);
+                                        if (ctx.error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
+                                            toast.error("An account with this email already exists. Please sign in instead.");
+                                        } else {
+                                            toast.error(ctx.error.message || "Sign-up failed");
+                                        }
+                                        sessionStorage.removeItem("pendingRole");
                                     },
                                     onSuccess: () => {
                                         toast.success("Account created successfully!");
-                                        router.push("/dashboard");
+                                        router.push("/onboarding");
                                     },
                                 },
                             });
@@ -214,13 +243,19 @@ export default function SignUp() {
                 </div>
             </CardContent>
             <CardFooter>
-                <div className="flex justify-center w-full border-t py-4">
+                <div className="flex flex-col items-center w-full border-t py-4 gap-2">
+                    <p className="text-center text-sm text-muted-foreground">
+                        Already have an account?{" "}
+                        <Link href="/login" className="text-primary hover:underline font-medium">
+                            Sign in
+                        </Link>
+                    </p>
                     <p className="text-center text-xs text-neutral-500">
                         Secured by <span className="text-orange-400">better-auth.</span>
                     </p>
                 </div>
             </CardFooter>
-        </Card>
+        </Card >
     );
 }
 

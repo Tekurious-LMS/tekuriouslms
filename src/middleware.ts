@@ -22,21 +22,32 @@ export async function middleware(request: NextRequest) {
     }
 
     // Protect dashboard routes - require authentication
-    if (pathname.startsWith("/(dashboard)") || pathname.startsWith("/admin") ||
-        pathname.startsWith("/teacher") || pathname.startsWith("/student") ||
-        pathname.startsWith("/parent")) {
+    const isDashboardRoute =
+        pathname.startsWith("/(dashboard)") ||
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/teacher") ||
+        pathname.startsWith("/student") ||
+        pathname.startsWith("/parent") ||
+        pathname === "/dashboard";
 
+    if (isDashboardRoute) {
         if (!sessionToken) {
             // Redirect to login if not authenticated
             const url = request.nextUrl.clone();
             url.pathname = "/signup";
             return NextResponse.redirect(url);
         }
-    }
 
-    // TODO: Add role-based route protection
-    // This will require fetching the session from Better Auth API
-    // For now, we'll handle role-based redirects in the dashboard layout
+        // Fetch session to check role
+        // Note: In middleware we can't easily enable the full session check without making an API call
+        // For better performance, we'll trust the session token exists for now
+        // and let the page layouts handle the fine-grained role redirection
+        // or we could decode the token if it were a JWT, but Better Auth uses opaque tokens by default
+
+        // However, for strict role separation, we should consider fetching session here
+        // But for this step, we will rely on the page-level checks we added to dashboard pages
+        // to redirect back if role doesn't match.
+    }
 
     return NextResponse.next();
 }

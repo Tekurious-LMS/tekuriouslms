@@ -22,7 +22,7 @@ function AppLayoutContent({ children }: AppLayoutProps) {
             {/* Main Content Area */}
             <div className={cn("flex-1 flex flex-col min-h-screen transition-all duration-300", collapsed ? "md:pl-[70px]" : "md:pl-64")}>
                 <TopHeader />
-                <main className="flex-1 p-6 overflow-y-auto bg-slate-50/50 dark:bg-background">
+                <main className="flex-1 p-6 overflow-y-auto bg-muted/20 dark:bg-background">
                     <div className="container mx-auto max-w-7xl animate-in fade-in zoom-in duration-300">
                         {children}
                     </div>
