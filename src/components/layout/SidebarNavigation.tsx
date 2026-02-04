@@ -80,9 +80,13 @@ export function SidebarNavigation({ mobile, collapsed, toggleCollapse }: Sidebar
         ],
     };
 
-    // Select menu based on role default to empty
-    // @ts-ignore
-    const currentMenu = menuItems[normalizedRole] || [];
+    // Define valid role types
+    type ValidRole = 'Student' | 'Teacher' | 'Admin' | 'Parent';
+
+    // Select menu based on role, default to empty
+    const currentMenu = (normalizedRole && normalizedRole in menuItems)
+        ? menuItems[normalizedRole as ValidRole]
+        : [];
 
     return (
         <div className={cn("flex flex-col h-full bg-sidebar border-r border-sidebar-border transition-all duration-300", mobile ? "w-full" : (collapsed ? "w-[70px]" : "w-64"))}>
