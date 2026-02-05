@@ -4,7 +4,57 @@ import type { NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Get session cookie
+    // ------------------------------------------------------------------
+    // 1. TENANT RESOLUTION (Subdomain)
+    // ------------------------------------------------------------------
+    const hostname = request.headers.get("host") || "";
+    // Assume format: [slug].domain.com or [slug].localhost:3000
+    // If just domain.com or localhost:3000, it's the root (landing page) or invalid depending on app logic.
+    // For this implementation, we extract the first part if it has multiple parts (excluding port/TLD logic simplified).
+
+    let tenantSlug = null;
+
+    if (hostname.includes(".")) {
+        const parts = hostname.split(".");
+        // Basic check: if strictly 2 parts (e.g. "localhost:3000"), first part is NOT tenant unless strictly defined.
+        // Usually defaults to "www" or empty.
+        // Development hack: if localhost, treat query param or specific header as override, OR just assume "demo" if on localhost root?
+        // Strict rule: "Extract tenant slug from subdomain".
+
+        if (parts.length > 2) {
+            tenantSlug = parts[0]; // school1.tekurious.com -> school1
+        } else if (hostname.includes("localhost") && parts.length === 1) {
+            // localhost:3000 -> no subdomain
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 2. TENANT GUARD
+    // ------------------------------------------------------------------
+    // If we are on a dashboard route, we MUST have a tenant.
+    const isDashboardRoute =
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/teacher") ||
+        pathname.startsWith("/student") ||
+        pathname.startsWith("/parent");
+
+    if (isDashboardRoute && !tenantSlug) {
+        // Option: Redirect to landing or 404
+        return new NextResponse("Tenant Not Found (Subdomain Required)", { status: 404 });
+    }
+
+    // Prepare Response
+    const response = NextResponse.next();
+
+    if (tenantSlug) {
+        // Attach to headers for downstream consumption
+        response.headers.set("x-tenant-slug", tenantSlug);
+    }
+
+    // ------------------------------------------------------------------
+    // 3. AUTHENTICATION (Better Auth)
+    // ------------------------------------------------------------------
     const sessionToken = request.cookies.get("better-auth.session_token");
 
     // Public routes that don't require authentication
@@ -13,43 +63,24 @@ export async function middleware(request: NextRequest) {
 
     // Allow public routes
     if (publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
-        return NextResponse.next();
+        return response;
     }
 
     // Allow auth routes
     if (authRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.next();
+        return response;
     }
-
-    // Protect dashboard routes - require authentication
-    const isDashboardRoute =
-        pathname.startsWith("/(dashboard)") ||
-        pathname.startsWith("/admin") ||
-        pathname.startsWith("/teacher") ||
-        pathname.startsWith("/student") ||
-        pathname.startsWith("/parent") ||
-        pathname === "/dashboard";
 
     if (isDashboardRoute) {
         if (!sessionToken) {
-            // Redirect to login if not authenticated
             const url = request.nextUrl.clone();
-            url.pathname = "/signup";
+            url.pathname = "/signup"; // Or login
             return NextResponse.redirect(url);
         }
-
-        // Fetch session to check role
-        // Note: In middleware we can't easily enable the full session check without making an API call
-        // For better performance, we'll trust the session token exists for now
-        // and let the page layouts handle the fine-grained role redirection
-        // or we could decode the token if it were a JWT, but Better Auth uses opaque tokens by default
-
-        // However, for strict role separation, we should consider fetching session here
-        // But for this step, we will rely on the page-level checks we added to dashboard pages
-        // to redirect back if role doesn't match.
+        // Strict Role/Tenant checks would happen in Layout/Page or via strict API calls
     }
 
-    return NextResponse.next();
+    return response;
 }
 
 export const config = {

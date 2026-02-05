@@ -6,15 +6,11 @@ const prisma = new PrismaClient();
 async function main() {
     console.log("Checking latest users...");
     try {
-        const users = await prisma.lmsUser.findMany({
+        const users = await prisma.domainUser.findMany({
             take: 5,
             orderBy: { createdAt: 'desc' },
             include: {
-                roles: {
-                    include: {
-                        role: true
-                    }
-                }
+                tenant: true
             }
         });
 
@@ -24,8 +20,9 @@ async function main() {
             users.forEach(u => {
                 console.log(`User: ${u.name} (${u.email})`);
                 console.log(`  ID: ${u.id}`);
-                console.log(`  BetterAuthID: ${u.betterAuthUserId}`);
-                console.log(`  Roles: ${u.roles.map(r => r.role.roleName).join(', ')}`);
+                console.log(`  BetterAuthID: ${u.authUserId}`);
+                console.log(`  Tenant: ${u.tenant.name}`);
+                console.log(`  Role: ${u.role}`);
                 console.log("-----------------------------------");
             });
         }

@@ -31,61 +31,57 @@ export async function POST(request: NextRequest) {
         const userEmail = session.user.email;
         const userName = session.user.name || "New User";
 
-        // Check if LmsUser already exists
-        let lmsUser = await prisma.lmsUser.findUnique({
-            where: { betterAuthUserId: userId }
+        // Determine Tenant (Phase-1: Default to first found or create one)
+        let tenant = await prisma.tenant.findFirst();
+        if (!tenant) {
+            console.log("[ONBOARDING API] No tenant found. Creating default tenant.");
+            tenant = await prisma.tenant.create({
+                data: {
+                    name: "Default School",
+                    slug: "default-school",
+                }
+            });
+        }
+
+        // Check if DomainUser already exists
+        let domainUser = await prisma.domainUser.findUnique({
+            where: { authUserId: userId }
         });
 
-        if (!lmsUser) {
-            // Create LmsUser
-            lmsUser = await prisma.lmsUser.create({
+        const targetRole = role.toUpperCase() as "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
+
+        if (!domainUser) {
+            // Create DomainUser
+            domainUser = await prisma.domainUser.create({
                 data: {
                     name: userName,
                     email: userEmail,
-                    betterAuthUserId: userId
+                    authUserId: userId,
+                    tenantId: tenant.id,
+                    role: targetRole
                 }
             });
-            console.log(`[ONBOARDING API] Created LmsUser: ${lmsUser.id}`);
+            console.log(`[ONBOARDING API] Created DomainUser: ${domainUser.id}`);
+        } else {
+            // Update role if exists (optional, or error if already assigned?)
+            // For now, allow updating role during onboarding if not set or overriding
+            await prisma.domainUser.update({
+                where: { id: domainUser.id },
+                data: { role: targetRole }
+            });
+            console.log(`[ONBOARDING API] Updated DomainUser role: ${domainUser.id} to ${targetRole}`);
         }
 
-        // Check if role is already assigned
-        const existingRole = await prisma.userRole.findFirst({
-            where: { userId: lmsUser.id }
-        });
-
-        if (!existingRole) {
-            // Find or create the role
-            let roleRecord = await prisma.role.findFirst({
-                where: { roleName: role }
-            });
-
-            if (!roleRecord) {
-                roleRecord = await prisma.role.create({
-                    data: { roleName: role }
-                });
-                console.log(`[ONBOARDING API] Created Role: ${roleRecord.id}`);
-            }
-
-            // Assign role to user
-            await prisma.userRole.create({
-                data: {
-                    userId: lmsUser.id,
-                    roleId: roleRecord.id
-                }
-            });
-            console.log(`[ONBOARDING API] Assigned role ${role} to LmsUser ${lmsUser.id}`);
-        }
-
-        // Try to update the Better Auth user's role field (optional, may fail if column doesn't exist)
+        // Try to update the Better Auth user's role field
         try {
             await prisma.user.update({
                 where: { id: userId },
-                data: { role: role }
+                data: { role: role.toLowerCase() } // BetterAuth might use lowercase? Schema says String? @default("student")
             });
-            console.log(`[ONBOARDING API] Updated Better Auth user role to ${role}`);
+            // However, schema user.role is String? @default("student"). 
+            // Ideally we align this.
         } catch (updateError) {
-            console.warn("[ONBOARDING API] Could not update Better Auth user role field:", updateError);
-            // This is non-critical, the LmsUser role is the source of truth
+            console.warn("[ONBOARDING API] Could not update Better Auth user role:", updateError);
         }
 
         return NextResponse.json({
@@ -96,7 +92,6 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
         console.error("[ONBOARDING API] Error:", error);
-        console.error("[ONBOARDING API] Error details:", error?.message, error?.code);
         return NextResponse.json(
             { error: "Failed to assign role", details: error?.message || "Unknown error" },
             { status: 500 }

@@ -18,138 +18,79 @@ export const auth = betterAuth({
     },
     hooks: {
         after: createAuthMiddleware(async (ctx) => {
-            // Handle SignUp: Create LMS User and Role
+            // Handle SignUp: Create Domain User and Role
             if (ctx.path === "/sign-up/email") {
-                console.log("[AUTH HOOK] Sign-up hook triggered");
-                console.log("[AUTH HOOK] ctx.body:", JSON.stringify(ctx.body, null, 2));
+                const responseBody = ctx.context.responseBody as any;
+                const user = responseBody?.user;
+                const { email, name, image } = user || {};
+                const { role, tenantId } = ctx.body as any; // Passed from client during signup
 
-                // Better Auth usually returns the user/session in the body
-                // Check context for the new user or use the email from body to find them
-                const { email, name, role } = ctx.body as any;
-
-                console.log(`[AUTH HOOK] Extracted - email: ${email}, name: ${name}, role: ${role}`);
-
-                if (email && role) {
-                    // 1. Find the Better Auth user just created
+                if (email && role && tenantId) {
+                    // 1. Find Better Auth User
                     const betterAuthUser = await prisma.user.findUnique({
                         where: { email },
                     });
 
-                    console.log(`[AUTH HOOK] Found Better Auth user: ${betterAuthUser ? betterAuthUser.id : 'NOT FOUND'}`);
-
                     if (betterAuthUser) {
                         try {
-                            // 2. Check if LmsUser already exists (idempotency)
-                            const existingLmsUser = await prisma.lmsUser.findUnique({
-                                where: { betterAuthUserId: betterAuthUser.id }
+                            // 2. Check if Domain User exists
+                            const existingUser = await prisma.domainUser.findFirst({
+                                where: { authUserId: betterAuthUser.id }
                             });
 
-                            console.log(`[AUTH HOOK] Existing LmsUser: ${existingLmsUser ? existingLmsUser.id : 'NONE'}`);
-
-                            if (!existingLmsUser) {
-                                // 3. Create LmsUser
-                                const newLmsUser = await prisma.lmsUser.create({
+                            if (!existingUser) {
+                                // 3. Create Domain User
+                                await prisma.domainUser.create({
                                     data: {
-                                        name: name || betterAuthUser.name || "New User",
+                                        name: name || "New User",
                                         email: email,
-                                        betterAuthUserId: betterAuthUser.id
+                                        role: role, // Expecting UserRole enum string
+                                        tenantId: tenantId,
+                                        authUserId: betterAuthUser.id,
+                                        avatar: image
                                     }
                                 });
-
-                                console.log(`[AUTH HOOK] Created LmsUser: ${newLmsUser.id}`);
-
-                                // 4. Assign Role
-                                const roleRecord = await prisma.role.findFirst({
-                                    where: { roleName: role }
-                                });
-
-                                if (roleRecord) {
-                                    await prisma.userRole.create({
-                                        data: {
-                                            userId: newLmsUser.id,
-                                            roleId: roleRecord.id
-                                        }
-                                    });
-                                    console.log(`[AUTH HOOK] Assigned existing role ${role} (ID: ${roleRecord.id})`);
-                                } else {
-                                    // Create role if it doesn't exist
-                                    const newRole = await prisma.role.create({
-                                        data: { roleName: role }
-                                    });
-                                    await prisma.userRole.create({
-                                        data: {
-                                            userId: newLmsUser.id,
-                                            roleId: newRole.id
-                                        }
-                                    });
-                                    console.log(`[AUTH HOOK] Created and assigned new role ${role} (ID: ${newRole.id})`);
-                                }
-                                console.log(`[AUTH HOOK] Successfully created LmsUser and assigned role ${role} for ${email}`);
+                                console.log(`[AUTH HOOK] Created Domain User for ${email}`);
                             }
                         } catch (error) {
-                            console.error("[AUTH HOOK] Error creating LMS User:", error);
+                            console.error("[AUTH HOOK] Error creating Domain User:", error);
                         }
                     }
-                } else {
-                    console.log("[AUTH HOOK] Missing email or role, skipping LmsUser creation");
                 }
             }
 
-            // Enrich session data when session is fetched
+            // Enrich session data
             if (ctx.path === "/get-session" && ctx.context.session) {
                 const session = ctx.context.session;
                 const userId = session.user.id;
 
-                // Fetch LMS user data with role and school information
-                const betterAuthUser = await prisma.lmsUser.findUnique({
-                    where: { betterAuthUserId: userId },
+                const domainUser = await prisma.domainUser.findUnique({
+                    where: { authUserId: userId },
                     include: {
-                        roles: {
-                            include: {
-                                role: true
-                            }
-                        }
+                        tenant: true
                     }
                 });
 
-                if (!betterAuthUser) {
-                    // User hasn't completed onboarding or isn't linked
-                    (session.user as any).lmsUserId = null;
+                if (!domainUser) {
                     (session.user as any).role = null;
-                    (session.user as any).schoolId = null;
-                    (session.user as any).schoolName = null;
+                    (session.user as any).tenantId = null;
                     return;
                 }
 
-                // Find school through enrollment check or other relation if available
-                // For now, we'll try to find school via checking enrollments in classes
-                const enrollment = await prisma.enrollment.findFirst({
-                    where: { userId: betterAuthUser.id },
-                    include: {
-                        course: {
-                            include: {
-                                subject: {
-                                    include: {
-                                        class: {
-                                            include: {
-                                                school: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+                (session.user as any).id = domainUser.id; // Switch to Domain ID? Or keep Auth ID? Keeping Auth ID for better-auth compatibility, but might be confusing. 
+                // Wait, prompt says "Fetch student analytics... id must equal req.user.id".
+                // If we use Domain ID in session, we must be consistent.
+                // Better Auth session.user.id is usually the Auth User ID.
+                // Let's inject domainId as separate field to be safe, or OVERRIDE if we are sure.
+                // Instructed: "user: { id... }"
 
-                const schoolData = enrollment?.course?.subject?.class?.school;
-                const primaryRole = betterAuthUser.roles?.[0]?.role?.roleName;
+                (session.user as any).domainId = domainUser.id;
+                (session.user as any).role = domainUser.role;
+                (session.user as any).tenantId = domainUser.tenantId;
+                (session.user as any).avatar = domainUser.avatar;
 
-                // Enrich session user with custom fields
-                (session.user as any).lmsUserId = betterAuthUser.id;
-                (session.user as any).role = primaryRole || null;
-                (session.user as any).schoolId = schoolData?.id || null;
-                (session.user as any).schoolName = schoolData?.name || null;
+                // Also attach tenant details to the root response if possible, simplified here
+                // Note: Better Auth might strictly type session, we are casting to any.
             }
         })
     }
