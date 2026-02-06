@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { authorizedRoute } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
+import { auditLogService } from "@/lib/audit-log.service";
 
-export const POST = authorizedRoute(async ({ req, tenantId }) => {
+export const POST = authorizedRoute(async ({ req, tenantId, user }) => {
   const body = await req.json();
   const { classId, subjectId } = body;
 
@@ -44,6 +45,19 @@ export const POST = authorizedRoute(async ({ req, tenantId }) => {
       subjectId,
       tenantId
     }
+  });
+
+  // Audit Log
+  await auditLogService.log({
+    tenantId,
+    actorId: user.id,
+    actorRole: user.role,
+    actionType: "CREATE_CLASS_SUBJECT_MAPPING",
+    resourceType: "ClassSubject",
+    resourceId: mapping.id,
+    metadata: { classId, subjectId },
+    ipAddress: auditLogService.getIpAddress(req.headers),
+    userAgent: auditLogService.getUserAgent(req.headers),
   });
 
   return NextResponse.json(mapping, { status: 201 });

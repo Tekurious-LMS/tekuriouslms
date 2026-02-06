@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { authorizedRoute } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
+import { auditLogService } from "@/lib/audit-log.service";
 
-export const POST = authorizedRoute(async ({ req, tenantId }) => {
+export const POST = authorizedRoute(async ({ req, tenantId, user }) => {
   const body = await req.json();
   const { email, role } = body;
 
@@ -42,6 +43,19 @@ export const POST = authorizedRoute(async ({ req, tenantId }) => {
       role: role as UserRole,
       tenantId
     }
+  });
+
+  // Audit Log
+  await auditLogService.log({
+    tenantId,
+    actorId: user.id,
+    actorRole: user.role,
+    actionType: "INVITE_USER",
+    resourceType: "User",
+    resourceId: newUser.id,
+    metadata: { email, role },
+    ipAddress: auditLogService.getIpAddress(req.headers),
+    userAgent: auditLogService.getUserAgent(req.headers),
   });
 
   return NextResponse.json({ success: true, userId: newUser.id }, { status: 201 });

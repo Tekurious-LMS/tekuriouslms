@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizedRoute } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
+import { auditLogService } from "@/lib/audit-log.service";
 
 export const POST = authorizedRoute(async ({ tenantId, user, req, params }) => {
   const { id } = await params;
@@ -69,6 +70,19 @@ export const POST = authorizedRoute(async ({ tenantId, user, req, params }) => {
       submittedAt: new Date(),
       answers: answers
     }
+  });
+
+  // Audit Log
+  await auditLogService.log({
+    tenantId,
+    actorId: user.id,
+    actorRole: user.role,
+    actionType: "SUBMIT_ASSESSMENT",
+    resourceType: "Submission",
+    resourceId: submission.id,
+    metadata: { assessmentId: assessment.id, score: submission.score },
+    ipAddress: auditLogService.getIpAddress(req.headers),
+    userAgent: auditLogService.getUserAgent(req.headers),
   });
 
   return NextResponse.json({

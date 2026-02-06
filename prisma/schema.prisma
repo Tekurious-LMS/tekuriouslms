@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-
 }
 
 // --------------------------------------------------------
@@ -12,20 +11,20 @@ datasource db {
 // --------------------------------------------------------
 
 model user {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   name          String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   image         String?
-  role          String?   @default("student")
-  
-  sessions      session[]
-  accounts      account[]
-  
+  role          String?  @default("student")
+
+  sessions session[]
+  accounts account[]
+
   // Link to Domain User
-  domainUser    DomainUser?     @relation("AuthLink")
+  domainUser DomainUser? @relation("AuthLink")
 }
 
 model session {
@@ -54,7 +53,7 @@ model account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  user                  user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model verification {
@@ -101,141 +100,139 @@ enum UserRole {
 }
 
 model DomainUser {
-  @@map("User")
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String
-  email        String
-  
-  role         UserRole
-  
-  tenantId     String   @db.Uuid
-  tenant       Tenant   @relation(fields: [tenantId], references: [id])
-  
+  id    String @id @default(uuid()) @db.Uuid
+  name  String
+  email String
+
+  role UserRole
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   // Link to Better Auth
-  authUserId   String?  @unique
-  authUser     user?    @relation("AuthLink", fields: [authUserId], references: [id])
-  
-  avatar       String?
+  authUserId String? @unique
+  authUser   user?   @relation("AuthLink", fields: [authUserId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  avatar String?
 
-  @@unique([email, tenantId]) // Enforce email uniqueness per tenant
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   studentProfile StudentProfile?
-  
+
   // Parent Relations
-  parents        ParentMapping[] @relation("Student")
-  children       ParentMapping[] @relation("Parent")
+  parents  ParentMapping[] @relation("Student")
+  children ParentMapping[] @relation("Parent")
 
   // Teacher Relations
-  createdCourses Course[] 
+  createdCourses Course[]
 
-  
   // Student Relations
-  submissions    Submission[]
-  progress       Progress[]
-  
-  auditLogs      AuditLog[]
+  submissions Submission[]
+  progress    Progress[]
+
+  auditLogsAsActor AuditLog[]
+
+  @@unique([email, tenantId]) // Enforce email uniqueness per tenant
+  @@map("User")
 }
 
 model StudentProfile {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @db.Uuid
-  user      DomainUser     @relation(fields: [userId], references: [id])
-  
+  id     String     @id @default(uuid()) @db.Uuid
+  userId String     @unique @db.Uuid
+  user   DomainUser @relation(fields: [userId], references: [id])
+
   sectionId String?  @db.Uuid
   section   Section? @relation(fields: [sectionId], references: [id])
-  
-  classId   String?  @db.Uuid // Added as per Phase-1 Req
-  
+
+  classId String? @db.Uuid // Added as per Phase-1 Req
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ParentMapping {
-  id        String @id @default(uuid()) @db.Uuid
-  
+  id String @id @default(uuid()) @db.Uuid
+
   createdAt DateTime @default(now())
-  
-  parentId  String @db.Uuid
-  parent    DomainUser   @relation("Parent", fields: [parentId], references: [id])
-  
-  studentId String @db.Uuid
-  student   DomainUser   @relation("Student", fields: [studentId], references: [id])
+
+  parentId String     @db.Uuid
+  parent   DomainUser @relation("Parent", fields: [parentId], references: [id])
+
+  studentId String     @db.Uuid
+  student   DomainUser @relation("Student", fields: [studentId], references: [id])
 }
 
 // --------------------------------------------------------
 // ACADEMIC STRUCTURE
 // --------------------------------------------------------
 
-
 model Class {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String  @id @default(uuid()) @db.Uuid
   name        String
   description String?
-  isActive    Boolean  @default(true)
-  
-  tenantId    String   @db.Uuid
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  
+  isActive    Boolean @default(true)
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   // Teacher relation removed for strict Phase-1 compliance (no teacher assignment to class yet)
   // teacherId String? @db.Uuid
   // teacher   User?   @relation("ClassTeacher", fields: [teacherId], references: [id])
-  
-  sections    Section[]
-  subjects    ClassSubject[]
-  courses     Course[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  sections Section[]
+  subjects ClassSubject[]
+  courses  Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Section {
-  id       String   @id @default(uuid()) @db.Uuid
+  id       String  @id @default(uuid()) @db.Uuid
   name     String
-  isActive Boolean  @default(true)
-  
-  classId  String   @db.Uuid
-  class    Class    @relation(fields: [classId], references: [id])
-  
-  tenantId String   @db.Uuid
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-  
+  isActive Boolean @default(true)
+
+  classId String @db.Uuid
+  class   Class  @relation(fields: [classId], references: [id])
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   students StudentProfile[]
-  
+
   createdAt DateTime @default(now())
   // No updatedAt required by prompt, but typically good practice. Prompt didn't strictly forbid it, but listed only createdAt.
 }
 
 model Subject {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String  @id @default(uuid()) @db.Uuid
   name        String
   description String?
-  isActive    Boolean  @default(true)
-  
-  tenantId    String   @db.Uuid
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  
-  classes     ClassSubject[]
-  courses     Course[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean @default(true)
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  classes ClassSubject[]
+  courses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ClassSubject {
-  id        String   @id @default(uuid()) @db.Uuid
-  
-  classId   String   @db.Uuid
-  class     Class    @relation(fields: [classId], references: [id])
-  
-  subjectId String   @db.Uuid
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  
-  tenantId  String   @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
+
+  classId String @db.Uuid
+  class   Class  @relation(fields: [classId], references: [id])
+
+  subjectId String  @db.Uuid
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  tenantId String @db.Uuid
   // No direct relation to Tenant needed if inferred, but adding for strict compliance (and prompt asked for it)
-  
+
   createdAt DateTime @default(now())
 }
 
@@ -244,55 +241,55 @@ model ClassSubject {
 // --------------------------------------------------------
 
 model Course {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String  @id @default(uuid()) @db.Uuid
   title       String
   description String?
   thumbnail   String?
-  
-  subjectId   String   @db.Uuid
-  subject     Subject  @relation(fields: [subjectId], references: [id])
-  
-  createdById String   @db.Uuid
-  createdBy   DomainUser     @relation(fields: [createdById], references: [id])
-  
-  tenantId    String   @db.Uuid
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  
-  classId     String   @db.Uuid
-  class       Class    @relation(fields: [classId], references: [id])
+
+  subjectId String  @db.Uuid
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  createdById String     @db.Uuid
+  createdBy   DomainUser @relation(fields: [createdById], references: [id])
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  classId String @db.Uuid
+  class   Class  @relation(fields: [classId], references: [id])
 
   modules     Module[]
   assessments Assessment[]
 }
 
 model Module {
-  id       String @id @default(uuid()) @db.Uuid
-  title    String
-  order    Int    @default(0)
-  
+  id    String @id @default(uuid()) @db.Uuid
+  title String
+  order Int    @default(0)
+
   courseId String @db.Uuid
   course   Course @relation(fields: [courseId], references: [id])
-  
+
   tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id])
-  
-  lessons  Lesson[]
+
+  lessons Lesson[]
 }
 
 model Lesson {
-  id       String @id @default(uuid()) @db.Uuid
-  title    String
-  content  String? // Markdown or HTML
-  type     String  @default("TEXT") // "VIDEO", "TEXT"
-  url      String?
-  order    Int     @default(0)
-  
+  id      String  @id @default(uuid()) @db.Uuid
+  title   String
+  content String? // Markdown or HTML
+  type    String  @default("TEXT") // "VIDEO", "TEXT"
+  url     String?
+  order   Int     @default(0)
+
   moduleId String @db.Uuid
   module   Module @relation(fields: [moduleId], references: [id])
-  
+
   tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id])
-  
+
   progress Progress[]
 }
 
@@ -301,23 +298,23 @@ model Lesson {
 // --------------------------------------------------------
 
 model Assessment {
-  id         String @id @default(uuid()) @db.Uuid
+  id         String    @id @default(uuid()) @db.Uuid
   title      String
   type       String // "MCQ" | "Assignment"
   dueDate    DateTime?
   totalMarks Int?
-  
-  courseId   String @db.Uuid
-  course     Course @relation(fields: [courseId], references: [id])
-  
-  tenantId   String @db.Uuid
-  tenant     Tenant @relation(fields: [tenantId], references: [id])
-  
-  questions  Question[]
+
+  courseId String @db.Uuid
+  course   Course @relation(fields: [courseId], references: [id])
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  questions   Question[]
   submissions Submission[]
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Question {
@@ -326,31 +323,31 @@ model Question {
   options       Json
   correctOption Int
   marks         Int    @default(1)
-  
-  assessmentId  String @db.Uuid
-  assessment    Assessment @relation(fields: [assessmentId], references: [id])
-  
-  tenantId      String @db.Uuid
-  tenant        Tenant @relation(fields: [tenantId], references: [id])
+
+  assessmentId String     @db.Uuid
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 }
 
 model Submission {
-  id           String   @id @default(uuid()) @db.Uuid
-  score        Int?
-  answers      Json?
-  status       String   @default("Pending") // "Pending" | "Completed"
-  
-  submittedAt  DateTime?
-  createdAt    DateTime @default(now())
-  
-  assessmentId String   @db.Uuid
+  id      String @id @default(uuid()) @db.Uuid
+  score   Int?
+  answers Json?
+  status  String @default("Pending") // "Pending" | "Completed"
+
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  assessmentId String     @db.Uuid
   assessment   Assessment @relation(fields: [assessmentId], references: [id])
-  
-  studentId    String   @db.Uuid
-  student      DomainUser     @relation(fields: [studentId], references: [id])
-  
-  tenantId     String   @db.Uuid
-  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+
+  studentId String     @db.Uuid
+  student   DomainUser @relation(fields: [studentId], references: [id])
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([studentId, assessmentId])
 }
@@ -361,23 +358,23 @@ enum ProgressStatus {
 }
 
 model Progress {
-  id           String         @id @default(uuid()) @db.Uuid
-  
-  tenantId     String         @db.Uuid
-  tenant       Tenant         @relation(fields: [tenantId], references: [id])
-  
-  studentId    String         @db.Uuid
-  student      DomainUser     @relation(fields: [studentId], references: [id])
-  
-  lessonId     String         @db.Uuid
-  lesson       Lesson         @relation(fields: [lessonId], references: [id])
-  
+  id String @id @default(uuid()) @db.Uuid
+
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  studentId String     @db.Uuid
+  student   DomainUser @relation(fields: [studentId], references: [id])
+
+  lessonId String @db.Uuid
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+
   status       ProgressStatus @default(InProgress)
   lastAccessed DateTime?
-  
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([studentId, lessonId])
 }
 
@@ -386,14 +383,23 @@ model Progress {
 // --------------------------------------------------------
 
 model AuditLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  action    String
-  details   Json?
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  actorId   String     @db.Uuid
+  actorUser     DomainUser @relation(fields: [actorId], references: [id])
+  actorRole UserRole
+
+  actionType   String
+  resourceType String
+  resourceId   String? @db.Uuid
+  metadata     Json?
+
+  ipAddress String?
+  userAgent String?
+
   createdAt DateTime @default(now())
-  
-  userId    String   @db.Uuid
-  user      DomainUser     @relation(fields: [userId], references: [id])
-  
-  tenantId  String   @db.Uuid
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
 }
