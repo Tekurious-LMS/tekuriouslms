@@ -26,13 +26,14 @@ async function onboardTenant() {
 
     // Collect tenant information
     const tenantName = await question("Tenant Name (e.g., 'Example School'): ");
+    const tenantSlug = await question("Tenant Slug (e.g., 'example-school'): ");
 
     // Collect admin information
     const adminEmail = await question("Admin Email: ");
     const adminName = await question("Admin Name: ");
 
     console.log("\n📋 Summary:");
-    console.log(`Tenant: ${tenantName}`);
+    console.log(`Tenant: ${tenantName} (${tenantSlug})`);
     console.log(`Admin: ${adminName} (${adminEmail})\n`);
 
     const confirm = await question("Proceed with onboarding? (yes/no): ");
@@ -49,6 +50,7 @@ async function onboardTenant() {
         const tenant = await prisma.tenant.create({
             data: {
                 name: tenantName,
+                slug: tenantSlug,
             },
         });
         console.log(`✅ Tenant created: ${tenant.id}`);
@@ -66,22 +68,27 @@ async function onboardTenant() {
 
         // 3. Assign admin role
         console.log("\n3️⃣ Assigning admin role...");
-        await prisma.userRole.create({
-            data: {
-                userId: adminUser.id,
-                role: Role.ADMIN,
+
+        // Find the ADMIN role in the database
         const adminRole = await prisma.role.findUnique({
             where: {
                 name: Role.ADMIN,
             },
         });
+
         if (!adminRole) {
             throw new Error("Admin role not found in database");
         }
+
         await prisma.userRole.create({
             data: {
                 userId: adminUser.id,
                 roleId: adminRole.id,
+                tenantId: tenant.id,
+            },
+        });
+        console.log(`✅ Admin role assigned`);
+
         console.log("\n🎉 Tenant onboarding complete!");
         console.log("\n📝 Next steps:");
         console.log(`1. Admin should sign up at: ${process.env.BETTER_AUTH_URL}/signup`);
