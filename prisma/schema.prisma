@@ -105,6 +105,7 @@ model Tenant {
   subscriptions       Subscription[]
   studentProfiles     StudentProfile[]
   parentMappings      ParentMapping[]
+  progresses          Progress[]
 
   @@map("Tenant")
 }
@@ -132,6 +133,7 @@ model LmsUser {
   roles       UserRole[]
   enrollments Enrollment[]
   submissions Submission[]      @relation("StudentSubmissions")
+  progresses  Progress[]        @relation("StudentProgress")
   analytics   StudentAnalytics?
   rankings    Ranking[]
 
@@ -390,6 +392,7 @@ model Course {
   assessments Assessment[]
   lmsUser     LmsUser?     @relation(fields: [lmsUserId], references: [id])
   lmsUserId   String?      @db.Uuid
+  progresses  Progress[]
 
   @@index([tenantId, teacherId])
   @@index([tenantId, classId])
@@ -441,10 +444,11 @@ model Lesson {
   courseId String @db.Uuid
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  tenantId  String   @db.Uuid
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tenantId   String     @db.Uuid
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  progresses Progress[]
 
   @@index([tenantId, courseId])
   @@index([tenantId, moduleId])
@@ -543,6 +547,40 @@ model Submission {
   @@index([tenantId, assessmentId])
   @@index([tenantId, studentId])
   @@map("Submission")
+}
+
+////////////////////////////
+// PROGRESS TRACKING
+////////////////////////////
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Progress {
+  id             String         @id @default(uuid()) @db.Uuid
+  studentId      String         @db.Uuid
+  lessonId       String         @db.Uuid
+  courseId       String         @db.Uuid
+  status         ProgressStatus @default(NOT_STARTED)
+  lastAccessedAt DateTime       @default(now())
+  tenantId       String         @db.Uuid
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  student LmsUser @relation("StudentProgress", fields: [studentId], references: [id])
+  lesson  Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId, tenantId])
+  @@index([tenantId, studentId])
+  @@index([tenantId, courseId])
+  @@index([tenantId, lessonId])
+  @@map("Progress")
 }
 
 ////////////////////////////
