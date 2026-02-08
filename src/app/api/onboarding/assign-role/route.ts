@@ -31,14 +31,14 @@ export async function POST(request: NextRequest) {
         const userEmail = session.user.email;
         const userName = session.user.name || "New User";
 
-        // Get default tenant (first tenant in the system)
-        const defaultTenant = await prisma.tenant.findFirst({
-            orderBy: { createdAt: 'asc' }
+        // Get default tenant (consistent with auth.ts - use slug 'default')
+        const defaultTenant = await prisma.tenant.findUnique({
+            where: { slug: 'default' }
         });
 
         if (!defaultTenant) {
             return NextResponse.json(
-                { error: "No tenant found in system. Please contact administrator." },
+                { error: "Default tenant not found. Please contact administrator." },
                 { status: 500 }
             );
         }

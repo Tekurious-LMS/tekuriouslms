@@ -78,8 +78,10 @@ export async function middleware(request: NextRequest) {
         // ========================================
 
         // Protected dashboard routes require authentication
-        const dashboardRoutes = ["/admin", "/teacher", "/student", "/parent"];
-        const isDashboardRoute = dashboardRoutes.some(route => pathname.includes(route));
+        // Use regex to match exact path segments to avoid false positives
+        // (e.g., /t/admin-school/courses should NOT match "/admin")
+        const dashboardRoutePattern = /^\/t\/[^/]+\/(admin|teacher|student|parent)(\/|$)/;
+        const isDashboardRoute = dashboardRoutePattern.test(pathname);
 
         if (isDashboardRoute) {
             // Check for session token

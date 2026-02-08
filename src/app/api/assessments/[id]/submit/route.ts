@@ -13,7 +13,11 @@ export const POST = createRBACApiHandler(
     [Role.STUDENT],
     async (req, context) => {
         try {
-            const assessmentId = req.nextUrl.pathname.split("/").filter(Boolean)[1];
+            // Extract assessment ID from path: /api/assessments/:id/submit
+            // Split: ["", "api", "assessments", ":id", "submit"]
+            // Index 2 is the ID (after filtering empty strings)
+            const pathSegments = req.nextUrl.pathname.split("/").filter(Boolean);
+            const assessmentId = pathSegments[2]; // ["api", "assessments", ":id", "submit"] -> index 2
 
             if (!assessmentId) {
                 return errorResponse("Assessment ID is required", 400);

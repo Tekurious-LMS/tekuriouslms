@@ -5,7 +5,6 @@
  * Admin only
  */
 
-import { NextRequest } from "next/server";
 import { createRBACApiHandler, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { Role } from "@/lib/rbac-types";
 import { createClassSubjectMapping } from "@/lib/structure-repository";

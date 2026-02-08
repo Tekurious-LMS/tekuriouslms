@@ -12,7 +12,11 @@ import { getSubmissions } from "@/lib/assessment-repository";
 export const GET = createRBACApiHandler(
     [Role.TEACHER],
     async (req, context) => {
-        const assessmentId = req.nextUrl.pathname.split("/").filter(Boolean)[1];
+        // Extract assessment ID from path: /api/assessments/:id/submissions
+        // Split: ["", "api", "assessments", ":id", "submissions"]
+        // Index 2 is the ID (after filtering empty strings)
+        const pathSegments = req.nextUrl.pathname.split("/").filter(Boolean);
+        const assessmentId = pathSegments[2]; // ["api", "assessments", ":id", "submissions"] -> index 2
 
         if (!assessmentId) {
             return jsonResponse({ error: "Assessment ID is required" }, 400);

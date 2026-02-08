@@ -1,4 +1,5 @@
 import { requireTenantContext } from "./tenant-context";
+import { TenantMismatchError } from "./api-errors";
 
 /**
  * Assert that tenant context exists
@@ -21,12 +22,4 @@ export function assertTenantId(tenantId: string): void {
     }
 }
 
-/**
- * Error thrown when tenant ID doesn't match context
- */
-export class TenantMismatchError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "TenantMismatchError";
-    }
-}
+
