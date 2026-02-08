@@ -70,11 +70,18 @@ async function onboardTenant() {
             data: {
                 userId: adminUser.id,
                 role: Role.ADMIN,
-                tenantId: tenant.id,
+        const adminRole = await prisma.role.findUnique({
+            where: {
+                name: Role.ADMIN,
             },
         });
-        console.log(`✅ Admin role assigned`);
-
+        if (!adminRole) {
+            throw new Error("Admin role not found in database");
+        }
+        await prisma.userRole.create({
+            data: {
+                userId: adminUser.id,
+                roleId: adminRole.id,
         console.log("\n🎉 Tenant onboarding complete!");
         console.log("\n📝 Next steps:");
         console.log(`1. Admin should sign up at: ${process.env.BETTER_AUTH_URL}/signup`);
