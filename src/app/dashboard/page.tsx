@@ -25,7 +25,8 @@ export default function DashboardRedirector() {
     }
 
     // Get role from tenant context or session
-    const role = currentRole || (session.user as any)?.role;
+    const role =
+      currentRole || (session.user as unknown as { role?: string })?.role;
 
     if (role) {
       const normalizedRole = role.toLowerCase();
@@ -41,7 +42,9 @@ export default function DashboardRedirector() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+        <p className="text-muted-foreground">
+          Redirecting to your dashboard...
+        </p>
       </div>
     </div>
   );

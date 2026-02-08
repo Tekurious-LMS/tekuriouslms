@@ -1,9 +1,9 @@
 /**
  * RBAC Type Definitions
- * 
+ *
  * This file defines the locked role enum and capability matrix
  * for the Tekurious LMS RBAC system.
- * 
+ *
  * CRITICAL: These roles are immutable in Phase-1
  */
 
@@ -12,96 +12,96 @@
  * A user has exactly ONE role per session
  */
 export enum Role {
-    ADMIN = "ADMIN",
-    TEACHER = "TEACHER",
-    STUDENT = "STUDENT",
-    PARENT = "PARENT",
+  ADMIN = "ADMIN",
+  TEACHER = "TEACHER",
+  STUDENT = "STUDENT",
+  PARENT = "PARENT",
 }
 
 /**
  * Role Capability Matrix (Source of Truth)
- * 
+ *
  * This matrix defines what each role CAN and CANNOT do.
  * All authorization decisions must reference this matrix.
  */
 export const RoleCapabilities = {
-    [Role.ADMIN]: {
-        // Allowed
-        canManageUsers: true,
-        canManageStructure: true,
-        canManageTeacherAssignments: true,
-        canViewOrgAnalytics: true,
-        canViewAuditLogs: true,
+  [Role.ADMIN]: {
+    // Allowed
+    canManageUsers: true,
+    canManageStructure: true,
+    canManageTeacherAssignments: true,
+    canViewOrgAnalytics: true,
+    canViewAuditLogs: true,
 
-        // Forbidden
-        canConsumeContent: false,
-        canAttemptAssessments: false,
-        canTeach: false,
-    },
+    // Forbidden
+    canConsumeContent: false,
+    canAttemptAssessments: false,
+    canTeach: false,
+  },
 
-    [Role.TEACHER]: {
-        // Allowed
-        canManageOwnCourses: true,
-        canCreateLessons: true,
-        canCreateAssessments: true,
-        canViewClassProgress: true,
-        canViewAssignedStudents: true,
+  [Role.TEACHER]: {
+    // Allowed
+    canManageOwnCourses: true,
+    canCreateLessons: true,
+    canCreateAssessments: true,
+    canViewClassProgress: true,
+    canViewAssignedStudents: true,
 
-        // Forbidden
-        canManageUsers: false,
-        canManageStructure: false,
-        canViewOrgAnalytics: false,
-        canImpersonateOthers: false,
-    },
+    // Forbidden
+    canManageUsers: false,
+    canManageStructure: false,
+    canViewOrgAnalytics: false,
+    canImpersonateOthers: false,
+  },
 
-    [Role.STUDENT]: {
-        // Allowed
-        canViewEnrolledCourses: true,
-        canViewLessons: true,
-        canAttemptAssessments: true,
-        canViewOwnProgress: true,
-        canViewOwnSubmissions: true,
+  [Role.STUDENT]: {
+    // Allowed
+    canViewEnrolledCourses: true,
+    canViewLessons: true,
+    canAttemptAssessments: true,
+    canViewOwnProgress: true,
+    canViewOwnSubmissions: true,
 
-        // Forbidden
-        canCreateContent: false,
-        canManageAnything: false,
-        canViewOtherStudents: false,
-    },
+    // Forbidden
+    canCreateContent: false,
+    canManageAnything: false,
+    canViewOtherStudents: false,
+  },
 
-    [Role.PARENT]: {
-        // Allowed
-        canViewLinkedStudents: true,
-        canViewStudentProgress: true,
-        canViewStudentAssessments: true,
+  [Role.PARENT]: {
+    // Allowed
+    canViewLinkedStudents: true,
+    canViewStudentProgress: true,
+    canViewStudentAssessments: true,
 
-        // Forbidden
-        canAccessLessons: false,
-        canAttemptAssessments: false,
-        canCreateAnything: false,
-        canManageAnything: false,
-    },
+    // Forbidden
+    canAccessLessons: false,
+    canAttemptAssessments: false,
+    canCreateAnything: false,
+    canManageAnything: false,
+  },
 } as const;
 
 /**
  * Type guard to check if a string is a valid Role
  */
 export function isValidRole(role: string): role is Role {
-    return Object.values(Role).includes(role as Role);
+  return Object.values(Role).includes(role as Role);
 }
 
 /**
  * Get capabilities for a role
  */
 export function getRoleCapabilities(role: Role) {
-    return RoleCapabilities[role];
+  return RoleCapabilities[role];
 }
 
 /**
  * Check if a role has a specific capability
  */
 export function hasCapability(
-    role: Role,
-    capability: keyof typeof RoleCapabilities[Role]
+  role: Role,
+  capability: keyof (typeof RoleCapabilities)[Role],
 ): boolean {
-    return RoleCapabilities[role][capability] === true;
+  return RoleCapabilities[role][capability] === true;
 }

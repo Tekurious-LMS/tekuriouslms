@@ -1,6 +1,6 @@
 /**
  * Structure API - Full Academic Structure
- * 
+ *
  * Returns complete academic structure tree
  * Allowed: ADMIN (full access), TEACHER (read-only)
  */
@@ -10,9 +10,9 @@ import { Role } from "@/lib/rbac-types";
 import { getFullStructure } from "@/lib/structure-repository";
 
 export const GET = createRBACApiHandler(
-    [Role.ADMIN, Role.TEACHER],
-    async (req, context) => {
-        const structure = await getFullStructure(context);
-        return jsonResponse(structure);
-    }
+  [Role.ADMIN, Role.TEACHER],
+  async (req, context) => {
+    const structure = await getFullStructure(context);
+    return jsonResponse(structure);
+  },
 );

@@ -20,7 +20,10 @@ export default function SignUpPage() {
       <footer className="py-4 text-center text-sm text-muted-foreground border-t">
         <p>
           Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline font-medium">
+          <Link
+            href="/login"
+            className="text-primary hover:underline font-medium"
+          >
             Log in
           </Link>
         </p>

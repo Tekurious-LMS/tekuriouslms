@@ -5,7 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TenantProvider } from "@/contexts/TenantContext";
 
-const notoSans = Noto_Sans({ variable: '--font-sans', subsets: ["latin"] });
+const notoSans = Noto_Sans({ variable: "--font-sans", subsets: ["latin"] });
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -56,13 +56,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TenantProvider>
-            {children}
-          </TenantProvider>
+          <TenantProvider>{children}</TenantProvider>
         </ThemeProvider>
         <Analytics />
       </body>
     </html>
   );
 }
-

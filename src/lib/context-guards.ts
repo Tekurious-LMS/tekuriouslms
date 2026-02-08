@@ -6,7 +6,7 @@ import { TenantMismatchError } from "./api-errors";
  * Throws TenantContextMissingError if context is missing
  */
 export function assertTenantContext(): void {
-    requireTenantContext();
+  requireTenantContext();
 }
 
 /**
@@ -14,12 +14,10 @@ export function assertTenantContext(): void {
  * Throws TenantMismatchError if tenantId doesn't match
  */
 export function assertTenantId(tenantId: string): void {
-    const context = requireTenantContext();
-    if (context.tenantId !== tenantId) {
-        throw new TenantMismatchError(
-            `Tenant ID mismatch: expected ${context.tenantId}, got ${tenantId}`
-        );
-    }
+  const context = requireTenantContext();
+  if (context.tenantId !== tenantId) {
+    throw new TenantMismatchError(
+      `Tenant ID mismatch: expected ${context.tenantId}, got ${tenantId}`,
+    );
+  }
 }
-
-

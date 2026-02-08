@@ -2,13 +2,13 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { RoleGuard } from "@/components/layout/RoleGuard";
 
 export default function DashboardLayout({
-    children,
+  children,
 }: Readonly<{
-    children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-    return (
-        <RoleGuard>
-            <AppLayout>{children}</AppLayout>
-        </RoleGuard>
-    );
+  return (
+    <RoleGuard>
+      <AppLayout>{children}</AppLayout>
+    </RoleGuard>
+  );
 }

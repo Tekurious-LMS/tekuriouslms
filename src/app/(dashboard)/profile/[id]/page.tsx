@@ -13,102 +13,137 @@ import { StudentAttemptView } from "@/components/courses/StudentAttemptView";
 import { PaymentHistory } from "@/components/profile/PaymentHistory";
 
 export default function StudentProfilePage() {
-    const params = useParams();
-    // Mock fallback to first student if id not found or invalid
-    const student = users.find(u => u.id === params?.id) || users.find(u => u.role === "Student");
+  const params = useParams();
+  // Mock fallback to first student if id not found or invalid
+  const student =
+    users.find((u) => u.id === params?.id) ||
+    users.find((u) => u.role === "Student");
 
-    if (!student) return <div>User not found</div>;
+  if (!student) return <div>User not found</div>;
 
-    return (
-        <div className="space-y-6">
-            {/* Profile Header */}
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-                <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
-                    <AvatarImage src={`/avatars/${student.id}.png`} />
-                    <AvatarFallback className="text-2xl">{student.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="space-y-2 flex-1">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{student.name}</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Badge>{student.role}</Badge>
-                                <Badge variant="outline" className={student.status === 'Active' ? 'text-green-600 border-green-600' : 'text-red-600'}>
-                                    {student.status}
-                                </Badge>
-                            </div>
-                        </div>
-                        <Button variant="outline">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Profile
-                        </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-2">
-                        <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4" /> {student.email}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Phone className="h-4 w-4" /> +91 98765 43210
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" /> Bangalore, India
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" /> Joined Jan 2024
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className="space-y-6">
+      {/* Profile Header */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
+          <AvatarImage src={`/avatars/${student.id}.png`} />
+          <AvatarFallback className="text-2xl">
+            {student.name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {student.name}
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge>{student.role}</Badge>
+                <Badge
+                  variant="outline"
+                  className={
+                    student.status === "Active"
+                      ? "text-green-600 border-green-600"
+                      : "text-red-600"
+                  }
+                >
+                  {student.status}
+                </Badge>
+              </div>
             </div>
-
-            {/* Tabs */}
-            <Tabs defaultValue="overview" className="mt-6">
-                <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="history">Academic History</TabsTrigger>
-                    <TabsTrigger value="payments">Fee Payments</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="overview" className="space-y-6 mt-6">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Attendance</CardTitle></CardHeader>
-                            <CardContent><div className="text-2xl font-bold">92%</div></CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Avg Grade</CardTitle></CardHeader>
-                            <CardContent><div className="text-2xl font-bold">A-</div></CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending Assignments</CardTitle></CardHeader>
-                            <CardContent><div className="text-2xl font-bold">2</div></CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Fee Due</CardTitle></CardHeader>
-                            <CardContent><div className="text-2xl font-bold text-red-600">₹15,000</div></CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Recent Activity Reuse */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Recent Activity</h3>
-                        <StudentAttemptView />
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="history" className="mt-6">
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold">Performance History</h3>
-                            <Button variant="outline" size="sm">Download Report Card</Button>
-                        </div>
-                        <StudentAttemptView />
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="payments" className="mt-6">
-                    <PaymentHistory />
-                </TabsContent>
-            </Tabs>
+            <Button variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Profile
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-2">
+            <div className="flex items-center gap-1">
+              <Mail className="h-4 w-4" /> {student.email}
+            </div>
+            <div className="flex items-center gap-1">
+              <Phone className="h-4 w-4" /> +91 98765 43210
+            </div>
+            <div className="flex items-center gap-1">
+              <MapPin className="h-4 w-4" /> Bangalore, India
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" /> Joined Jan 2024
+            </div>
+          </div>
         </div>
-    );
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="history">Academic History</TabsTrigger>
+          <TabsTrigger value="payments">Fee Payments</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 mt-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Attendance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">92%</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Avg Grade</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">A-</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Pending Assignments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">2</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Fee Due</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">₹15,000</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Activity Reuse */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Recent Activity</h3>
+            <StudentAttemptView />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Performance History</h3>
+              <Button variant="outline" size="sm">
+                Download Report Card
+              </Button>
+            </div>
+            <StudentAttemptView />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="payments" className="mt-6">
+          <PaymentHistory />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
