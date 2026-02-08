@@ -5,7 +5,6 @@
  * using the RBAC system.
  */
 
-import { NextRequest } from "next/server";
 import { createRBACApiHandler, jsonResponse } from "@/lib/api-helpers";
 import { Role } from "@/lib/rbac-types";
 import { prisma } from "@/lib/prisma";
