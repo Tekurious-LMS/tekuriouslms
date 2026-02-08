@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { TenantContext, runWithTenantContext } from "./tenant-context";
 import { handleTenantError, TenantNotFoundError } from "./api-errors";
 import { prisma } from "./prisma";
+import { RBACContext, requireRole } from "./rbac-guard";
+import { Role } from "./rbac-types";
+import { handleRBACError, UnauthenticatedError } from "./rbac-errors";
+import { auth } from "./auth";
 
 /**
  * Wrap an API route handler with tenant context
@@ -76,4 +80,125 @@ export function jsonResponse(data: any, status: number = 200): Response {
  */
 export function errorResponse(message: string, status: number = 400): Response {
     return jsonResponse({ error: message }, status);
+}
+
+/**
+ * RBAC-AWARE API HANDLER
+ * 
+ * Wraps an API route handler with both tenant context AND role-based access control.
+ * This is the PRIMARY way to create protected API routes.
+ * 
+ * Order of enforcement:
+ * 1. Tenant resolution
+ * 2. Authentication
+ * 3. RBAC guard (role check)
+ * 4. Business logic
+ * 
+ * @param request - Next.js request
+ * @param allowedRoles - Array of roles that can access this endpoint
+ * @param handler - Handler function that receives RBAC context
+ * @returns Response
+ */
+export async function withRBACContext(
+    request: NextRequest,
+    allowedRoles: Role[],
+    handler: (context: RBACContext) => Promise<Response>
+): Promise<Response> {
+    try {
+        // Step 1: Tenant Resolution
+        const tenantSlug = request.headers.get("x-tenant-slug");
+        if (!tenantSlug) {
+            throw new TenantNotFoundError("Tenant slug not found in request headers");
+        }
+
+        const tenant = await prisma.tenant.findUnique({
+            where: { slug: tenantSlug },
+        });
+
+        if (!tenant) {
+            throw new TenantNotFoundError(`Tenant not found: ${tenantSlug}`);
+        }
+
+        // Step 2: Authentication
+        const session = await auth.api.getSession({ headers: request.headers });
+
+        if (!session?.user) {
+            throw new UnauthenticatedError("Authentication required");
+        }
+
+        // Get LmsUser with role information
+        const lmsUser = await prisma.lmsUser.findUnique({
+            where: {
+                betterAuthUserId: session.user.id,
+                tenantId: tenant.id,
+            },
+            include: {
+                roles: {
+                    include: {
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        if (!lmsUser) {
+            throw new UnauthenticatedError("User not found in this tenant");
+        }
+
+        // Get user's role
+        const userRole = lmsUser.roles[0]?.role?.roleName as Role;
+
+        if (!userRole) {
+            throw new UnauthenticatedError("User role not assigned");
+        }
+
+        // Step 3: RBAC Guard
+        const rbacContext: RBACContext = {
+            tenantId: tenant.id,
+            tenantSlug: tenant.slug,
+            tenantName: tenant.name,
+            tenantConfig: {
+                logo: tenant.logo,
+                theme: tenant.themeConfig,
+            },
+            userId: lmsUser.id,
+            userRole,
+            userEmail: lmsUser.email,
+            userName: lmsUser.name || lmsUser.email,
+        };
+
+        requireRole(rbacContext, allowedRoles);
+
+        // Step 4: Run handler within context
+        return await runWithTenantContext(rbacContext, () => handler(rbacContext));
+    } catch (error) {
+        // Handle RBAC errors
+        if (error instanceof Error && error.name.includes("RBAC")) {
+            return handleRBACError(error);
+        }
+        // Handle tenant errors
+        if (error instanceof Error) {
+            return handleTenantError(error);
+        }
+        throw error;
+    }
+}
+
+/**
+ * Create an RBAC-aware API route handler
+ * Higher-order function that wraps your handler with RBAC + tenant context
+ * 
+ * @param allowedRoles - Array of roles that can access this endpoint
+ * @param handler - Handler function
+ * @returns API route handler
+ */
+export function createRBACApiHandler(
+    allowedRoles: Role[],
+    handler: (req: NextRequest, context: RBACContext) => Promise<Response>
+): (req: NextRequest) => Promise<Response> {
+    return async (req: NextRequest) => {
+        return await withRBACContext(req, allowedRoles, (context) =>
+            handler(req, context)
+        );
+    };
 }
