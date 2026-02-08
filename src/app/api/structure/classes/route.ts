@@ -40,12 +40,11 @@ export const POST = createRBACApiHandler(
     [Role.ADMIN],
     async (req, context) => {
         const body = await req.json();
-        const { name, boardId, schoolId } = body;
+        const { name, schoolId } = body;
 
         const newClass = await prisma.class.create({
             data: {
                 name,
-                boardId,
                 schoolId,
                 tenantId: context.tenantId,
             },
