@@ -1,11 +1,10 @@
 /**
- * GET /api/structure
+ * Structure API - Full Academic Structure
  * 
- * Get full academic structure tree
+ * Returns complete academic structure tree
  * Allowed: ADMIN (full access), TEACHER (read-only)
  */
 
-import { NextRequest } from "next/server";
 import { createRBACApiHandler, jsonResponse } from "@/lib/api-helpers";
 import { Role } from "@/lib/rbac-types";
 import { getFullStructure } from "@/lib/structure-repository";

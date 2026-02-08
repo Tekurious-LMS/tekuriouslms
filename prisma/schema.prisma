@@ -644,7 +644,7 @@ enum ActionType {
 model AuditLog {
   id           String     @id @default(uuid()) @db.Uuid
   actorId      String     @db.Uuid
-  actorRole    Role       @relation(fields: [roleId], references: [id])
+  actorRole    String // Store role name as string for audit trail
   actionType   ActionType
   resourceType String
   resourceId   String?    @db.Uuid
@@ -655,7 +655,8 @@ model AuditLog {
   // Relations
   actor  LmsUser @relation("AuditActor", fields: [actorId], references: [id])
   tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  roleId String  @db.Uuid
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String? @db.Uuid
 
   @@index([tenantId, createdAt])
   @@index([tenantId, actionType])

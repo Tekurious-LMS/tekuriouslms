@@ -7,7 +7,6 @@
  * - TEACHER/ADMIN: basic user data
  */
 
-import { NextRequest } from "next/server";
 import { createRBACApiHandler, jsonResponse } from "@/lib/api-helpers";
 import { Role } from "@/lib/rbac-types";
 import { getCurrentUser } from "@/lib/user-repository";

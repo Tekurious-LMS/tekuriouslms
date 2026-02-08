@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { TenantContext, runWithTenantContext } from "./tenant-context";
 import { handleTenantError, TenantNotFoundError } from "./api-errors";
 import { prisma } from "./prisma";
@@ -127,7 +127,7 @@ export async function withRBACContext(
         }
 
         // Get LmsUser with role information
-        const lmsUser = await prisma.lmsUser.findUnique({
+        const lmsUser = await prisma.lmsUser.findFirst({
             where: {
                 betterAuthUserId: session.user.id,
                 tenantId: tenant.id,

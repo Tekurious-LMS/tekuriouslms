@@ -70,16 +70,38 @@ export async function middleware(request: NextRequest) {
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set("x-tenant-slug", tenantSlug);
 
-        const response = NextResponse.next({
+        // Continue to auth protection below instead of returning early
+        // This ensures tenant-scoped dashboard routes are also auth-protected
+
+        // ========================================
+        // AUTH PROTECTION (AFTER TENANT)
+        // ========================================
+
+        // Protected dashboard routes require authentication
+        const dashboardRoutes = ["/admin", "/teacher", "/student", "/parent"];
+        const isDashboardRoute = dashboardRoutes.some(route => pathname.includes(route));
+
+        if (isDashboardRoute) {
+            // Check for session token
+            const sessionToken = request.cookies.get("better-auth.session_token");
+
+            if (!sessionToken) {
+                // No session - redirect to signup
+                const signupUrl = new URL("/signup", request.url);
+                return NextResponse.redirect(signupUrl);
+            }
+        }
+
+        // Return with tenant headers set
+        return NextResponse.next({
             request: {
                 headers: requestHeaders,
             },
         });
-        return response;
     }
 
     // ========================================
-    // AUTH PROTECTION (AFTER TENANT)
+    // AUTH PROTECTION (FOR NON-TENANT ROUTES)
     // ========================================
 
     // Protected dashboard routes require authentication

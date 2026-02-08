@@ -1,11 +1,9 @@
 /**
- * POST /api/structure/subject
+ * Structure API - Subject Management
  * 
- * Create or update subject
  * Admin only
  */
 
-import { NextRequest } from "next/server";
 import { createRBACApiHandler, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { Role } from "@/lib/rbac-types";
 import { upsertSubject } from "@/lib/structure-repository";
