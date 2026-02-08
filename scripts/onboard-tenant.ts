@@ -26,16 +26,13 @@ async function onboardTenant() {
 
     // Collect tenant information
     const tenantName = await question("Tenant Name (e.g., 'Example School'): ");
-    const tenantDomain = await question(
-        "Tenant Domain (e.g., 'example-school'): "
-    );
 
     // Collect admin information
     const adminEmail = await question("Admin Email: ");
     const adminName = await question("Admin Name: ");
 
     console.log("\n📋 Summary:");
-    console.log(`Tenant: ${tenantName} (${tenantDomain})`);
+    console.log(`Tenant: ${tenantName}`);
     console.log(`Admin: ${adminName} (${adminEmail})\n`);
 
     const confirm = await question("Proceed with onboarding? (yes/no): ");
@@ -52,7 +49,6 @@ async function onboardTenant() {
         const tenant = await prisma.tenant.create({
             data: {
                 name: tenantName,
-                domain: tenantDomain,
             },
         });
         console.log(`✅ Tenant created: ${tenant.id}`);
