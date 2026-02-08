@@ -94,6 +94,8 @@ model Tenant {
   subjects         Subject[]
   classSubjects    ClassSubject[]
   courses          Course[]
+  modules          Module[]
+  lessons          Lesson[]
   enrollments      Enrollment[]
   assessments      Assessment[]
   attempts         Attempt[]
@@ -132,7 +134,8 @@ model LmsUser {
   analytics   StudentAnalytics?
   rankings    Ranking[]
 
-  coursesCreated Course[] @relation("CourseCreator")
+  // Teacher-owned courses
+  teacherCourses Course[] @relation("TeacherCourses")
 
   // Student-specific profile (only for STUDENT role)
   studentProfile StudentProfile?
@@ -140,6 +143,7 @@ model LmsUser {
   // Parent-student mappings
   parentMappings  ParentMapping[] @relation("ParentMappings")
   studentMappings ParentMapping[] @relation("StudentMappings")
+  courses         Course[]
 
   @@index([tenantId, id])
   @@index([tenantId, email])
@@ -352,30 +356,103 @@ model Topic {
 }
 
 ////////////////////////////
-// LMS CORE
+// LMS CORE - COURSES
 ////////////////////////////
 
 model Course {
-  id    String @id @default(uuid()) @db.Uuid
-  title String
+  id          String  @id @default(uuid()) @db.Uuid
+  title       String
+  description String? @db.Text
+  coverImage  String?
+
+  // Teacher ownership (required)
+  teacherId String  @db.Uuid
+  teacher   LmsUser @relation("TeacherCourses", fields: [teacherId], references: [id])
+
+  // Academic structure (required)
+  classId   String  @db.Uuid
+  subjectId String  @db.Uuid
+  class     Class   @relation(fields: [classId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id])
 
   // Multi-tenancy
   tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  subjectId String  @db.Uuid
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  createdById String  @db.Uuid
-  createdBy   LmsUser @relation("CourseCreator", fields: [createdById], references: [id])
-
+  // Relations
+  modules     Module[]
+  lessons     Lesson[]
   enrollments Enrollment[]
   assessments Assessment[]
-  class       Class?       @relation(fields: [classId], references: [id])
-  classId     String?      @db.Uuid
+  lmsUser     LmsUser?     @relation(fields: [lmsUserId], references: [id])
+  lmsUserId   String?      @db.Uuid
 
-  @@index([tenantId, id])
+  @@index([tenantId, teacherId])
+  @@index([tenantId, classId])
+  @@index([tenantId, subjectId])
+  @@map("Course")
 }
+
+////////////////////////////
+// MODULES & LESSONS
+////////////////////////////
+
+enum ContentType {
+  VIDEO
+  TEXT
+  PDF
+}
+
+model Module {
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  orderIndex Int
+  courseId   String   @db.Uuid
+  tenantId   String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@unique([courseId, orderIndex])
+  @@index([tenantId, courseId])
+  @@map("Module")
+}
+
+model Lesson {
+  id          String      @id @default(uuid()) @db.Uuid
+  title       String
+  contentType ContentType
+  content     String      @db.Text
+  duration    Int? // In minutes
+
+  // Optional module association
+  moduleId String? @db.Uuid
+  module   Module? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+
+  // Required course association
+  courseId String @db.Uuid
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  tenantId  String   @db.Uuid
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, courseId])
+  @@index([tenantId, moduleId])
+  @@map("Lesson")
+}
+
+////////////////////////////
+// ENROLLMENT
+////////////////////////////
 
 model Enrollment {
   id       String @id @default(uuid()) @db.Uuid

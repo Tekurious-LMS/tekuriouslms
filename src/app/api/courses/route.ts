@@ -1,108 +1,52 @@
 /**
- * Example: Multi-Role Course API
+ * GET /api/courses
+ * POST /api/courses
  * 
- * This demonstrates how to create an API route that supports
- * multiple roles with different access levels.
+ * List and create courses with role-based filtering
  */
 
 import { NextRequest } from "next/server";
 import { createRBACApiHandler, jsonResponse, errorResponse } from "@/lib/api-helpers";
 import { Role } from "@/lib/rbac-types";
-import { prisma } from "@/lib/prisma";
-import { requireTeacherCourseAccess } from "@/lib/rbac-ownership";
+import { getCourses, createCourse } from "@/lib/course-repository";
 
-/**
- * GET /api/courses
- * Multi-role: ADMIN, TEACHER, STUDENT
- * - ADMIN: See all courses in tenant
- * - TEACHER: See only owned/assigned courses
- * - STUDENT: See only enrolled courses
- */
 export const GET = createRBACApiHandler(
-    [Role.ADMIN, Role.TEACHER, Role.STUDENT],
+    [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
     async (req, context) => {
-        let courses;
-
-        switch (context.userRole) {
-            case Role.ADMIN:
-                // Admin sees all courses in tenant
-                courses = await prisma.course.findMany({
-                    where: { tenantId: context.tenantId },
-                    include: {
-                        class: true,
-                        subject: true,
-                        createdBy: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true,
-                            },
-                        },
-                    },
-                });
-                break;
-
-            case Role.TEACHER:
-                // Teacher sees only owned courses
-                courses = await prisma.course.findMany({
-                    where: {
-                        tenantId: context.tenantId,
-                        createdById: context.userId,
-                    },
-                    include: {
-                        class: true,
-                        subject: true,
-                    },
-                });
-                break;
-
-            case Role.STUDENT:
-                // Student sees only enrolled courses
-                courses = await prisma.course.findMany({
-                    where: {
-                        tenantId: context.tenantId,
-                        enrollments: {
-                            some: {
-                                userId: context.userId,
-                            },
-                        },
-                    },
-                    include: {
-                        class: true,
-                        subject: true,
-                    },
-                });
-                break;
-
-            default:
-                return errorResponse("Invalid role", 403);
-        }
-
+        const courses = await getCourses(context);
         return jsonResponse(courses);
     }
 );
 
-/**
- * POST /api/courses
- * Teacher only - Create a new course
- */
 export const POST = createRBACApiHandler(
     [Role.TEACHER],
     async (req, context) => {
-        const body = await req.json();
-        const { title, description, classId, subjectId } = body;
+        try {
+            const body = await req.json();
+            const { title, description, coverImage, classId, subjectId } = body;
 
-        const course = await prisma.course.create({
-            data: {
-                title,
+            if (!title || typeof title !== "string" || title.trim().length === 0) {
+                return errorResponse("Course title is required", 400);
+            }
+
+            if (!classId || !subjectId) {
+                return errorResponse("classId and subjectId are required", 400);
+            }
+
+            const course = await createCourse(context, {
+                title: title.trim(),
                 description,
+                coverImage,
                 classId,
                 subjectId,
-                tenantId: context.tenantId,
-                createdById: context.userId,
-            },
-        });
+            });
 
-        return jsonResponse(course, 201);
+            return jsonResponse(course, 201);
+        } catch (error) {
+            if (error instanceof Error) {
+                return errorResponse(error.message, 400);
+            }
+            throw error;
+        }
     }
 );
