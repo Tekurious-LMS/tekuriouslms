@@ -8,6 +8,7 @@ import { prisma } from "./prisma";
 import { RBACContext } from "./rbac-guard";
 import { Role } from "./rbac-types";
 import { ForbiddenError, ResourceNotFoundError } from "./rbac-errors";
+import { logAudit, ActionType } from "./audit-logger";
 
 /**
  * Structure tree response
@@ -123,18 +124,38 @@ export async function upsertClass(
             throw new ResourceNotFoundError("Class not found");
         }
 
-        return await prisma.class.update({
+        const updated = await prisma.class.update({
             where: { id: data.id },
             data: { name: data.name },
         });
+
+        // Audit log
+        await logAudit(context, {
+            actionType: ActionType.CLASS_UPDATED,
+            resourceType: "Class",
+            resourceId: updated.id,
+            metadata: { className: updated.name },
+        });
+
+        return updated;
     } else {
         // Create new
-        return await prisma.class.create({
+        const created = await prisma.class.create({
             data: {
                 name: data.name,
                 tenantId: context.tenantId,
             },
         });
+
+        // Audit log
+        await logAudit(context, {
+            actionType: ActionType.CLASS_CREATED,
+            resourceType: "Class",
+            resourceId: created.id,
+            metadata: { className: created.name },
+        });
+
+        return created;
     }
 }
 
@@ -166,18 +187,38 @@ export async function upsertSubject(
             throw new ResourceNotFoundError("Subject not found");
         }
 
-        return await prisma.subject.update({
+        const updated = await prisma.subject.update({
             where: { id: data.id },
             data: { name: data.name },
         });
+
+        // Audit log
+        await logAudit(context, {
+            actionType: ActionType.SUBJECT_UPDATED,
+            resourceType: "Subject",
+            resourceId: updated.id,
+            metadata: { subjectName: updated.name },
+        });
+
+        return updated;
     } else {
         // Create new
-        return await prisma.subject.create({
+        const created = await prisma.subject.create({
             data: {
                 name: data.name,
                 tenantId: context.tenantId,
             },
         });
+
+        // Audit log
+        await logAudit(context, {
+            actionType: ActionType.SUBJECT_CREATED,
+            resourceType: "Subject",
+            resourceId: created.id,
+            metadata: { subjectName: created.name },
+        });
+
+        return created;
     }
 }
 
@@ -221,13 +262,23 @@ export async function createClassSubjectMapping(
     // Validate uniqueness
     await validateMappingUniqueness(context.tenantId, classId, subjectId);
 
-    return await prisma.classSubject.create({
+    const mapping = await prisma.classSubject.create({
         data: {
             classId,
             subjectId,
             tenantId: context.tenantId,
         },
     });
+
+    // Audit log
+    await logAudit(context, {
+        actionType: ActionType.SUBJECT_MAPPED,
+        resourceType: "ClassSubject",
+        resourceId: mapping.id,
+        metadata: { classId, subjectId },
+    });
+
+    return mapping;
 }
 
 /**

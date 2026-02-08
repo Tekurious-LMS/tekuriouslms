@@ -8,6 +8,7 @@ import { prisma } from "./prisma";
 import { RBACContext } from "./rbac-guard";
 import { Role } from "./rbac-types";
 import { ForbiddenError, ResourceNotFoundError } from "./rbac-errors";
+import { logAudit, ActionType } from "./audit-logger";
 
 /**
  * Get courses (role-filtered)
@@ -380,7 +381,7 @@ export async function createCourse(
         data.subjectId
     );
 
-    return await prisma.course.create({
+    const course = await prisma.course.create({
         data: {
             title: data.title,
             description: data.description,
@@ -405,6 +406,20 @@ export async function createCourse(
             },
         },
     });
+
+    // Audit log
+    await logAudit(context, {
+        actionType: ActionType.COURSE_CREATED,
+        resourceType: "Course",
+        resourceId: course.id,
+        metadata: {
+            courseTitle: course.title,
+            classId: course.classId,
+            subjectId: course.subjectId,
+        },
+    });
+
+    return course;
 }
 
 /**

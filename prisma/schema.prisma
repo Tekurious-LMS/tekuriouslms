@@ -106,6 +106,7 @@ model Tenant {
   studentProfiles     StudentProfile[]
   parentMappings      ParentMapping[]
   progresses          Progress[]
+  auditLogs           AuditLog[]
 
   @@map("Tenant")
 }
@@ -134,6 +135,7 @@ model LmsUser {
   enrollments Enrollment[]
   submissions Submission[]      @relation("StudentSubmissions")
   progresses  Progress[]        @relation("StudentProgress")
+  auditLogs   AuditLog[]        @relation("AuditActor")
   analytics   StudentAnalytics?
   rankings    Ranking[]
 
@@ -157,7 +159,8 @@ model Role {
   id       String @id @default(uuid()) @db.Uuid
   roleName String
 
-  users UserRole[]
+  users     UserRole[]
+  auditLogs AuditLog[]
 }
 
 model UserRole {
@@ -616,6 +619,47 @@ model Ranking {
 
   @@index([tenantId, id])
   @@index([tenantId, scope])
+  @@map("Ranking")
+}
+
+////////////////////////////
+// AUDIT LOGGING
+////////////////////////////
+
+enum ActionType {
+  // Admin actions
+  CLASS_CREATED
+  CLASS_UPDATED
+  SUBJECT_CREATED
+  SUBJECT_UPDATED
+  SUBJECT_MAPPED
+  USER_INVITED
+
+  // Teacher actions
+  COURSE_CREATED
+  LESSON_CREATED
+  ASSESSMENT_CREATED
+}
+
+model AuditLog {
+  id           String     @id @default(uuid()) @db.Uuid
+  actorId      String     @db.Uuid
+  actorRole    Role       @relation(fields: [roleId], references: [id])
+  actionType   ActionType
+  resourceType String
+  resourceId   String?    @db.Uuid
+  metadata     Json?
+  tenantId     String     @db.Uuid
+  createdAt    DateTime   @default(now())
+
+  // Relations
+  actor  LmsUser @relation("AuditActor", fields: [actorId], references: [id])
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roleId String  @db.Uuid
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, actionType])
+  @@map("AuditLog")
 }
 
 ////////////////////////////

@@ -1,13 +1,14 @@
 /**
  * Assessment Repository
  * 
- * MCQ assessment management with auto-grading and one-attempt policy
+ * MCQ assessment management with auto-grading and one-attempt enforcement
  */
 
 import { prisma } from "./prisma";
 import { RBACContext } from "./rbac-guard";
 import { Role } from "./rbac-types";
 import { ForbiddenError, ResourceNotFoundError } from "./rbac-errors";
+import { logAudit, ActionType } from "./audit-logger";
 
 /**
  * Get assessments (role-filtered)
@@ -314,7 +315,7 @@ export async function createAssessment(
     }
 
     // Create assessment with questions
-    return await prisma.assessment.create({
+    const assessment = await prisma.assessment.create({
         data: {
             title: data.title,
             type: "MCQ",
@@ -340,6 +341,20 @@ export async function createAssessment(
             questions: true,
         },
     });
+
+    // Audit log
+    await logAudit(context, {
+        actionType: ActionType.ASSESSMENT_CREATED,
+        resourceType: "Assessment",
+        resourceId: assessment.id,
+        metadata: {
+            assessmentTitle: assessment.title,
+            courseId: assessment.courseId,
+            questionCount: data.questions.length,
+        },
+    });
+
+    return assessment;
 }
 
 /**
