@@ -46,6 +46,8 @@ export async function middleware(request: NextRequest) {
     // TENANT RESOLUTION (BEFORE AUTH)
     // ========================================
 
+    let requestHeaders = new Headers(request.headers);
+
     // Check if this route requires tenant resolution
     if (requiresTenantResolution(pathname)) {
         const tenantSlug = extractTenantSlug(pathname);
@@ -67,15 +69,7 @@ export async function middleware(request: NextRequest) {
         // Store tenant slug in request headers for downstream use
         // Note: We don't validate against database here (Edge Runtime limitation)
         // Validation happens in API routes and page handlers
-        const requestHeaders = new Headers(request.headers);
         requestHeaders.set("x-tenant-slug", tenantSlug);
-
-        const response = NextResponse.next({
-            request: {
-                headers: requestHeaders,
-            },
-        });
-        return response;
     }
 
     // ========================================
@@ -95,6 +89,15 @@ export async function middleware(request: NextRequest) {
             const signupUrl = new URL("/signup", request.url);
             return NextResponse.redirect(signupUrl);
         }
+    }
+
+    // Return response with modified headers if tenant slug was set
+    if (requestHeaders.has("x-tenant-slug")) {
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
     }
 
     return NextResponse.next();
