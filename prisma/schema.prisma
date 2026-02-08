@@ -86,24 +86,25 @@ model Tenant {
   updatedAt   DateTime @updatedAt
 
   // Relations to all tenant-scoped entities
-  users            LmsUser[]
-  boards           Board[]
-  schools          School[]
-  classes          Class[]
-  sections         Section[]
-  subjects         Subject[]
-  classSubjects    ClassSubject[]
-  courses          Course[]
-  modules          Module[]
-  lessons          Lesson[]
-  enrollments      Enrollment[]
-  assessments      Assessment[]
-  attempts         Attempt[]
-  studentAnalytics StudentAnalytics[]
-  rankings         Ranking[]
-  subscriptions    Subscription[]
-  studentProfiles  StudentProfile[]
-  parentMappings   ParentMapping[]
+  users               LmsUser[]
+  boards              Board[]
+  schools             School[]
+  classes             Class[]
+  sections            Section[]
+  subjects            Subject[]
+  classSubjects       ClassSubject[]
+  courses             Course[]
+  modules             Module[]
+  lessons             Lesson[]
+  enrollments         Enrollment[]
+  assessments         Assessment[]
+  assessmentQuestions AssessmentQuestion[]
+  submissions         Submission[]
+  studentAnalytics    StudentAnalytics[]
+  rankings            Ranking[]
+  subscriptions       Subscription[]
+  studentProfiles     StudentProfile[]
+  parentMappings      ParentMapping[]
 
   @@map("Tenant")
 }
@@ -130,7 +131,7 @@ model LmsUser {
 
   roles       UserRole[]
   enrollments Enrollment[]
-  attempts    Attempt[]
+  submissions Submission[]      @relation("StudentSubmissions")
   analytics   StudentAnalytics?
   rankings    Ranking[]
 
@@ -477,39 +478,71 @@ model Enrollment {
 // ASSESSMENTS
 ////////////////////////////
 
-model Assessment {
-  id         String @id @default(uuid()) @db.Uuid
-  title      String
-  totalMarks Int
-
-  // Multi-tenancy
-  tenantId String @db.Uuid
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  courseId String @db.Uuid
-  course   Course @relation(fields: [courseId], references: [id])
-
-  attempts Attempt[]
-
-  @@index([tenantId, id])
+enum AssessmentType {
+  MCQ
 }
 
-model Attempt {
-  id    String @id @default(uuid()) @db.Uuid
-  score Int
+enum SubmissionStatus {
+  PENDING
+  COMPLETED
+}
 
-  // Multi-tenancy
-  tenantId String @db.Uuid
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+model Assessment {
+  id        String         @id @default(uuid()) @db.Uuid
+  title     String
+  type      AssessmentType @default(MCQ)
+  dueDate   DateTime?
+  courseId  String         @db.Uuid
+  tenantId  String         @db.Uuid
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  assessmentId String     @db.Uuid
-  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  // Relations
+  course      Course               @relation(fields: [courseId], references: [id])
+  tenant      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  questions   AssessmentQuestion[]
+  submissions Submission[]
 
-  userId  String  @db.Uuid
-  lmsUser LmsUser @relation(fields: [userId], references: [id])
+  @@index([tenantId, courseId])
+  @@map("Assessment")
+}
 
-  @@index([tenantId, id])
-  @@index([tenantId, userId])
+model AssessmentQuestion {
+  id                 String   @id @default(uuid()) @db.Uuid
+  assessmentId       String   @db.Uuid
+  questionText       String   @db.Text
+  options            Json // Array of strings
+  correctOptionIndex Int
+  tenantId           String   @db.Uuid
+  createdAt          DateTime @default(now())
+
+  // Relations
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, assessmentId])
+  @@map("AssessmentQuestion")
+}
+
+model Submission {
+  id           String           @id @default(uuid()) @db.Uuid
+  assessmentId String           @db.Uuid
+  studentId    String           @db.Uuid
+  answers      Json // Array of selected indices
+  score        Int
+  status       SubmissionStatus @default(PENDING)
+  submittedAt  DateTime         @default(now())
+  tenantId     String           @db.Uuid
+
+  // Relations
+  assessment Assessment @relation(fields: [assessmentId], references: [id])
+  student    LmsUser    @relation("StudentSubmissions", fields: [studentId], references: [id])
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, studentId, tenantId])
+  @@index([tenantId, assessmentId])
+  @@index([tenantId, studentId])
+  @@map("Submission")
 }
 
 ////////////////////////////
