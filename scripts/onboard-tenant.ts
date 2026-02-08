@@ -70,9 +70,9 @@ async function onboardTenant() {
         console.log("\n3️⃣ Assigning admin role...");
 
         // Find the ADMIN role in the database
-        const adminRole = await prisma.role.findUnique({
+        const adminRole = await prisma.role.findFirst({
             where: {
-                name: Role.ADMIN,
+                roleName: Role.ADMIN,
             },
         });
 
@@ -84,7 +84,6 @@ async function onboardTenant() {
             data: {
                 userId: adminUser.id,
                 roleId: adminRole.id,
-                tenantId: tenant.id,
             },
         });
         console.log(`✅ Admin role assigned`);
