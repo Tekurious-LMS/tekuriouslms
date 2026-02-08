@@ -51,7 +51,10 @@ export function runWithTenantContext<T>(
     context: TenantContext,
     fn: () => T | Promise<T>
 ): Promise<T> {
-    return tenantContextStorage.run(context, fn);
+    return tenantContextStorage.run(context, async () => {
+        const result = fn();
+        return result instanceof Promise ? result : Promise.resolve(result);
+    });
 }
 
 /**

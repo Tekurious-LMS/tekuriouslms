@@ -53,7 +53,7 @@ export async function requireTeacherCourseAccess(
             id: courseId,
             tenantId: context.tenantId,
             OR: [
-                { createdById: context.userId },
+                { teacherId: context.userId },
                 // TODO: Add teacher assignment check when TeacherAssignment table exists
             ],
         },
@@ -86,7 +86,7 @@ export async function requireTeacherStudentAccess(
             userId: studentId,
             tenantId: context.tenantId,
             course: {
-                createdById: context.userId,
+                teacherId: context.userId,
             },
         },
     });
@@ -145,15 +145,15 @@ export async function requireStudentAttemptOwnership(
         throw new ForbiddenError("Only students can access this resource");
     }
 
-    const attempt = await prisma.attempt.findFirst({
+    const submission = await prisma.submission.findFirst({
         where: {
             id: attemptId,
-            userId: context.userId,
+            studentId: context.userId,
             tenantId: context.tenantId,
         },
     });
 
-    if (!attempt) {
+    if (!submission) {
         throw new ResourceNotFoundError("Attempt not found");
     }
 }

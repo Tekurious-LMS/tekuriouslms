@@ -1,0 +1,140 @@
+
+> tekuriouslms@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (v7.2.0) to .\node_modules\@prisma\client in 425ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Environments: .env
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ✓ Compiled successfully in 17.1s
+   Running TypeScript ...
+   Collecting page data using 11 workers ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Better Auth initialized successfully
+   Generating static pages using 11 workers (0/44) ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+   Generating static pages using 11 workers (11/44) 
+   Generating static pages using 11 workers (22/44) 
+   Generating static pages using 11 workers (33/44) 
+[AUTH] Initializing Better Auth...
+[AUTH] Better Auth initialized successfully
+ ✓ Generating static pages using 11 workers (44/44) in 2.3s
+   Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /about
+├ ƒ /admin/dashboard
+├ ○ /admin/structure
+├ ○ /analytics
+├ ƒ /api/admin/users
+├ ƒ /api/analytics/admin
+├ ƒ /api/analytics/student/[id]
+├ ƒ /api/analytics/teacher
+├ ƒ /api/assessments
+├ ƒ /api/assessments/[id]
+├ ƒ /api/assessments/[id]/submissions
+├ ƒ /api/assessments/[id]/submit
+├ ƒ /api/audit-logs
+├ ƒ /api/auth/[...all]
+├ ƒ /api/auth/session
+├ ƒ /api/courses
+├ ƒ /api/courses/[id]
+├ ƒ /api/lessons/[id]
+├ ƒ /api/onboarding/assign-role
+├ ƒ /api/parents/students
+├ ƒ /api/progress/lesson
+├ ƒ /api/structure
+├ ƒ /api/structure/class
+├ ƒ /api/structure/classes
+├ ƒ /api/structure/mapping
+├ ƒ /api/structure/subject
+├ ƒ /api/test-prisma
+├ ƒ /api/users/me
+├ ○ /assessments
+├ ○ /blog
+├ ○ /contact
+├ ○ /courses
+├ ƒ /courses/[courseId]
+├ ○ /dashboard
+├ ○ /faq
+├ ○ /login
+├ ○ /notices
+├ ○ /onboarding
+├ ƒ /parent/dashboard
+├ ○ /practice
+├ ○ /pricing
+├ ƒ /profile/[id]
+├ ○ /resources
+├ ○ /schedule
+├ ○ /services
+├ ○ /signup
+├ ƒ /student/dashboard
+├ ƒ /teacher/dashboard
+└ ○ /users
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
