@@ -131,10 +131,10 @@ export async function getCourses(context: RBACContext): Promise<Course[]> {
 
     const classIds = parentMappings
       .map(
-        (m: { student: { studentProfile: { classId: string } } }) =>
+        (m: { student: { studentProfile: { classId: string } | null } }) =>
           m.student.studentProfile?.classId,
       )
-      .filter((id: string): id is string => !!id);
+      .filter((id: string | undefined): id is string => !!id);
 
     if (classIds.length === 0) {
       return [];

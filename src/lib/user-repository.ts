@@ -108,9 +108,16 @@ export async function getCurrentUser(
 
   // Add linked students if parent
   if (context.userRole === Role.PARENT) {
-    result.linkedStudents = user.parentMappings.map((mapping: { student: { id: string; name: string; studentProfile: { class: { name: string }; }; }; }) => ({
-      id: mapping.student.id,
-      name: mapping.student.name,
+    result.linkedStudents = user.parentMappings.map(
+      (mapping: {
+        student: {
+          id: string;
+          name: string;
+          studentProfile: { class: { name: string } } | null;
+        };
+      }) => ({
+        id: mapping.student.id,
+        name: mapping.student.name,
         className: mapping.student.studentProfile?.class.name || "N/A",
       }),
     );
@@ -184,7 +191,8 @@ export async function getParentStudents(
     },
   });
 
-  return mappings.map((mapping: { student: { id: string; name: string; studentProfile: { class: { name: string }; }; }; }) => ({
+  type MappingRow = (typeof mappings)[number];
+  return mappings.map((mapping: MappingRow) => ({
     ...mapping,
     student: {
       ...mapping.student,
@@ -193,10 +201,9 @@ export async function getParentStudents(
             ...mapping.student.studentProfile,
             class: mapping.student.studentProfile.class,
           }
-          : null,
-      },
-    }),
-  ) as ParentMapping[];
+        : null,
+    },
+  }));
 }
 
 /**
@@ -242,10 +249,14 @@ export async function getAllUsersByRole(context: RBACContext): Promise<{
 
   type UserWithRoles = (typeof users)[number];
   users.forEach((user: UserWithRoles) => {
-    const roles = user.roles.map((r: UserWithRoles["roles"][number]) => r.role.roleName as Role);
+    const roles = user.roles.map(
+      (r: UserWithRoles["roles"][number]) => r.role.roleName as Role,
+    );
     const userData = {
       ...user,
-      roles: user.roles.map((r: UserWithRoles["roles"][number]) => r.role.roleName as Role),
+      roles: user.roles.map(
+        (r: UserWithRoles["roles"][number]) => r.role.roleName as Role,
+      ),
     } as unknown as LmsUser;
 
     switch (roles[0] as Role) {
