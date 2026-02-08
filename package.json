@@ -9,6 +9,9 @@
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@hugeicons/core-free-icons": "^3.0.0",

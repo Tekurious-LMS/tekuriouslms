@@ -73,6 +73,36 @@ model verification {
 }
 
 ////////////////////////////
+// TENANT / ORGANIZATION
+////////////////////////////
+
+model Tenant {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique // For path-based tenant resolution: /t/{slug}/...
+  logo        String?
+  themeConfig Json? // Nullable JSON for theme customization (Phase-2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations to all tenant-scoped entities
+  users            LmsUser[]
+  boards           Board[]
+  schools          School[]
+  classes          Class[]
+  subjects         Subject[]
+  courses          Course[]
+  enrollments      Enrollment[]
+  assessments      Assessment[]
+  attempts         Attempt[]
+  studentAnalytics StudentAnalytics[]
+  rankings         Ranking[]
+  subscriptions    Subscription[]
+
+  @@map("Tenant")
+}
+
+////////////////////////////
 // USER & ACCESS CONTROL
 ////////////////////////////
 
@@ -82,6 +112,10 @@ model LmsUser {
   email     String   @unique
   phone     String?
   createdAt DateTime @default(now())
+
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Link to Better Auth user
   betterAuthUserId String? @unique
@@ -95,6 +129,8 @@ model LmsUser {
 
   coursesCreated Course[] @relation("CourseCreator")
 
+  @@index([tenantId, id])
+  @@index([tenantId, email])
   @@map("User")
 }
 
@@ -122,39 +158,63 @@ model Board {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   schools School[]
+
+  @@index([tenantId, id])
 }
 
 model School {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   boardId String @db.Uuid
   board   Board  @relation(fields: [boardId], references: [id])
 
   classes       Class[]
   subscriptions Subscription[]
+
+  @@index([tenantId, id])
 }
 
 model Class {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   schoolId String @db.Uuid
   school   School @relation(fields: [schoolId], references: [id])
 
   subjects Subject[]
+
+  @@index([tenantId, id])
 }
 
 model Subject {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   classId String @db.Uuid
   class   Class  @relation(fields: [classId], references: [id])
 
   chapters Chapter[]
   courses  Course[]
+
+  @@index([tenantId, id])
 }
 
 model Chapter {
@@ -183,6 +243,10 @@ model Course {
   id    String @id @default(uuid()) @db.Uuid
   title String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   subjectId String  @db.Uuid
   subject   Subject @relation(fields: [subjectId], references: [id])
 
@@ -191,6 +255,8 @@ model Course {
 
   enrollments Enrollment[]
   assessments Assessment[]
+
+  @@index([tenantId, id])
 }
 
 model Enrollment {
@@ -198,11 +264,18 @@ model Enrollment {
   progress Float
   status   String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   userId  String  @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
 
   courseId String @db.Uuid
   course   Course @relation(fields: [courseId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, userId])
 }
 
 ////////////////////////////
@@ -214,21 +287,34 @@ model Assessment {
   title      String
   totalMarks Int
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   courseId String @db.Uuid
   course   Course @relation(fields: [courseId], references: [id])
 
   attempts Attempt[]
+
+  @@index([tenantId, id])
 }
 
 model Attempt {
   id    String @id @default(uuid()) @db.Uuid
   score Int
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   assessmentId String     @db.Uuid
   assessment   Assessment @relation(fields: [assessmentId], references: [id])
 
   userId  String  @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, userId])
 }
 
 ////////////////////////////
@@ -240,8 +326,14 @@ model StudentAnalytics {
   avgScore   Float
   weakTopics String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   userId  String  @unique @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, id])
 }
 
 model Ranking {
@@ -249,8 +341,15 @@ model Ranking {
   scope String
   rank  Int
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   userId  String  @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, scope])
 }
 
 ////////////////////////////
@@ -262,10 +361,16 @@ model Subscription {
   planName String
   status   String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   schoolId String @db.Uuid
   school   School @relation(fields: [schoolId], references: [id])
 
   payments Payment[]
+
+  @@index([tenantId, id])
 }
 
 model Payment {
