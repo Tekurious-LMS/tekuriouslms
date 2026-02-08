@@ -31,6 +31,18 @@ export async function POST(request: NextRequest) {
         const userEmail = session.user.email;
         const userName = session.user.name || "New User";
 
+        // Get default tenant (first tenant in the system)
+        const defaultTenant = await prisma.tenant.findFirst({
+            orderBy: { createdAt: 'asc' }
+        });
+
+        if (!defaultTenant) {
+            return NextResponse.json(
+                { error: "No tenant found in system. Please contact administrator." },
+                { status: 500 }
+            );
+        }
+
         // Check if LmsUser already exists
         let lmsUser = await prisma.lmsUser.findUnique({
             where: { betterAuthUserId: userId }
@@ -42,7 +54,8 @@ export async function POST(request: NextRequest) {
                 data: {
                     name: userName,
                     email: userEmail,
-                    betterAuthUserId: userId
+                    betterAuthUserId: userId,
+                    tenantId: defaultTenant.id
                 }
             });
             console.log(`[ONBOARDING API] Created LmsUser: ${lmsUser.id}`);

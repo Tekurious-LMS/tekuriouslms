@@ -1,0 +1,23 @@
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Environments: .env
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ✓ Compiled successfully in 16.8s
+   Running TypeScript ...
+Failed to compile.
+
+./src/app/api/structure/classes/route.ts:48:17
+Type error: Object literal may only specify known properties, and 'boardId' does not exist in type 'Without<ClassCreateInput, ClassUncheckedCreateInput> & ClassUncheckedCreateInput'.
+
+[0m [90m 46 |[39m             data[33m:[39m {
+ [90m 47 |[39m                 name[33m,[39m
+[31m[1m>[22m[39m[90m 48 |[39m                 boardId[33m,[39m
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 49 |[39m                 schoolId[33m,[39m
+ [90m 50 |[39m                 tenantId[33m:[39m context[33m.[39mtenantId[33m,[39m
+ [90m 51 |[39m             }[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null
