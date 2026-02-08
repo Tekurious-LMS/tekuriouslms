@@ -19,8 +19,11 @@ export const GET = createRBACApiHandler(
         const classes = await prisma.class.findMany({
             where: { tenantId: context.tenantId },
             include: {
-                board: true,
-                school: true,
+                school: {
+                    include: {
+                        board: true,
+                    },
+                },
             },
             orderBy: { name: "asc" },
         });
