@@ -93,7 +93,7 @@ export async function middleware(request: NextRequest) {
         // Validation happens in API routes and page handlers
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set("x-tenant-slug", tenantSlug);
-        
+
         return NextResponse.next({
             request: {
                 headers: requestHeaders,
