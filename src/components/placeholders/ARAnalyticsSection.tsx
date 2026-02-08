@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TrendingUp, BarChart3, Lock } from "lucide-react";
 
 export function ARAnalyticsSection() {
@@ -43,6 +44,3 @@ export function ARAnalyticsSection() {
         </div>
     );
 }
-
-// Helper to avoid import errors if Button not imported
-import { Button } from "@/components/ui/button";

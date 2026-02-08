@@ -31,6 +31,18 @@ export async function POST(request: NextRequest) {
         const userEmail = session.user.email;
         const userName = session.user.name || "New User";
 
+        // Get default tenant (consistent with auth.ts - use slug 'default')
+        const defaultTenant = await prisma.tenant.findUnique({
+            where: { slug: 'default' }
+        });
+
+        if (!defaultTenant) {
+            return NextResponse.json(
+                { error: "Default tenant not found. Please contact administrator." },
+                { status: 500 }
+            );
+        }
+
         // Check if LmsUser already exists
         let lmsUser = await prisma.lmsUser.findUnique({
             where: { betterAuthUserId: userId }
@@ -42,7 +54,8 @@ export async function POST(request: NextRequest) {
                 data: {
                     name: userName,
                     email: userEmail,
-                    betterAuthUserId: userId
+                    betterAuthUserId: userId,
+                    tenantId: defaultTenant.id
                 }
             });
             console.log(`[ONBOARDING API] Created LmsUser: ${lmsUser.id}`);

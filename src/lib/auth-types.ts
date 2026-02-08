@@ -10,8 +10,10 @@ export interface SessionUser {
     // Custom LMS fields
     lmsUserId: string | null;
     role: string | null;
-    schoolId: string | null;
-    schoolName: string | null;
+    // Multi-tenancy fields
+    tenantId: string | null;
+    tenantSlug: string | null;
+    tenantName: string | null;
 }
 
 export interface ExtendedSession {

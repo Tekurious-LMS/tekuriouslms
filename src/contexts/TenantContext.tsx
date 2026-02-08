@@ -33,15 +33,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const contextValue: TenantContextType = {
         currentUser: user || null,
         currentRole: user?.role || null,
-        currentSchool: user?.schoolId && user?.schoolName
-            ? { id: user.schoolId, name: user.schoolName }
+        // Keep currentSchool for backward compatibility (alias to tenant)
+        currentSchool: user?.tenantId && user?.tenantName
+            ? { id: user.tenantId, name: user.tenantName }
             : null,
-        // Alias for school (tenant and organization are the same as school)
-        currentTenant: user?.schoolId && user?.schoolName
-            ? { id: user.schoolId, name: user.schoolName }
+        // Primary tenant fields (from new multi-tenant system)
+        currentTenant: user?.tenantId && user?.tenantName
+            ? { id: user.tenantId, name: user.tenantName }
             : null,
-        currentOrganization: user?.schoolId && user?.schoolName
-            ? { id: user.schoolId, name: user.schoolName }
+        currentOrganization: user?.tenantId && user?.tenantName
+            ? { id: user.tenantId, name: user.tenantName }
             : null,
         isLoading: isPending,
         isAuthenticated: !!session,

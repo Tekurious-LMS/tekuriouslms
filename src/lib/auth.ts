@@ -39,7 +39,18 @@ export const auth = betterAuth({
 
                     if (betterAuthUser) {
                         try {
-                            // 2. Check if LmsUser already exists (idempotency)
+                            // 2. Get default tenant (for Phase-1, all users go to default tenant)
+                            // TODO: In future, tenant should be determined from signup context
+                            const defaultTenant = await prisma.tenant.findUnique({
+                                where: { slug: 'default' }
+                            });
+
+                            if (!defaultTenant) {
+                                console.error("[AUTH HOOK] Default tenant not found!");
+                                return;
+                            }
+
+                            // 3. Check if LmsUser already exists (idempotency)
                             const existingLmsUser = await prisma.lmsUser.findUnique({
                                 where: { betterAuthUserId: betterAuthUser.id }
                             });
@@ -47,18 +58,19 @@ export const auth = betterAuth({
                             console.log(`[AUTH HOOK] Existing LmsUser: ${existingLmsUser ? existingLmsUser.id : 'NONE'}`);
 
                             if (!existingLmsUser) {
-                                // 3. Create LmsUser
+                                // 4. Create LmsUser with tenantId
                                 const newLmsUser = await prisma.lmsUser.create({
                                     data: {
                                         name: name || betterAuthUser.name || "New User",
                                         email: email,
+                                        tenantId: defaultTenant.id,
                                         betterAuthUserId: betterAuthUser.id
                                     }
                                 });
 
-                                console.log(`[AUTH HOOK] Created LmsUser: ${newLmsUser.id}`);
+                                console.log(`[AUTH HOOK] Created LmsUser: ${newLmsUser.id} for tenant: ${defaultTenant.slug}`);
 
-                                // 4. Assign Role
+                                // 5. Assign Role
                                 const roleRecord = await prisma.role.findFirst({
                                     where: { roleName: role }
                                 });
@@ -100,56 +112,43 @@ export const auth = betterAuth({
                 const session = ctx.context.session;
                 const userId = session.user.id;
 
-                // Fetch LMS user data with role and school information
-                const betterAuthUser = await prisma.lmsUser.findUnique({
+                // Fetch LMS user data with role and tenant information
+                const lmsUser = await prisma.lmsUser.findUnique({
                     where: { betterAuthUserId: userId },
                     include: {
                         roles: {
                             include: {
                                 role: true
                             }
-                        }
-                    }
-                });
-
-                if (!betterAuthUser) {
-                    // User hasn't completed onboarding or isn't linked
-                    (session.user as any).lmsUserId = null;
-                    (session.user as any).role = null;
-                    (session.user as any).schoolId = null;
-                    (session.user as any).schoolName = null;
-                    return;
-                }
-
-                // Find school through enrollment check or other relation if available
-                // For now, we'll try to find school via checking enrollments in classes
-                const enrollment = await prisma.enrollment.findFirst({
-                    where: { userId: betterAuthUser.id },
-                    include: {
-                        course: {
-                            include: {
-                                subject: {
-                                    include: {
-                                        class: {
-                                            include: {
-                                                school: true
-                                            }
-                                        }
-                                    }
-                                }
+                        },
+                        tenant: {
+                            select: {
+                                id: true,
+                                name: true,
+                                slug: true
                             }
                         }
                     }
                 });
 
-                const schoolData = enrollment?.course?.subject?.class?.school;
-                const primaryRole = betterAuthUser.roles?.[0]?.role?.roleName;
+                if (!lmsUser) {
+                    // User hasn't completed onboarding or isn't linked
+                    (session.user as any).lmsUserId = null;
+                    (session.user as any).role = null;
+                    (session.user as any).tenantId = null;
+                    (session.user as any).tenantSlug = null;
+                    (session.user as any).tenantName = null;
+                    return;
+                }
 
-                // Enrich session user with custom fields
-                (session.user as any).lmsUserId = betterAuthUser.id;
+                const primaryRole = lmsUser.roles?.[0]?.role?.roleName;
+
+                // Enrich session user with custom fields including tenant
+                (session.user as any).lmsUserId = lmsUser.id;
                 (session.user as any).role = primaryRole || null;
-                (session.user as any).schoolId = schoolData?.id || null;
-                (session.user as any).schoolName = schoolData?.name || null;
+                (session.user as any).tenantId = lmsUser.tenant.id;
+                (session.user as any).tenantSlug = lmsUser.tenant.slug;
+                (session.user as any).tenantName = lmsUser.tenant.name;
             }
         })
     }

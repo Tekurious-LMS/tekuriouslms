@@ -73,6 +73,45 @@ model verification {
 }
 
 ////////////////////////////
+// TENANT / ORGANIZATION
+////////////////////////////
+
+model Tenant {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique // For path-based tenant resolution: /t/{slug}/...
+  logo        String?
+  themeConfig Json? // Nullable JSON for theme customization (Phase-2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations to all tenant-scoped entities
+  users               LmsUser[]
+  boards              Board[]
+  schools             School[]
+  classes             Class[]
+  sections            Section[]
+  subjects            Subject[]
+  classSubjects       ClassSubject[]
+  courses             Course[]
+  modules             Module[]
+  lessons             Lesson[]
+  enrollments         Enrollment[]
+  assessments         Assessment[]
+  assessmentQuestions AssessmentQuestion[]
+  submissions         Submission[]
+  studentAnalytics    StudentAnalytics[]
+  rankings            Ranking[]
+  subscriptions       Subscription[]
+  studentProfiles     StudentProfile[]
+  parentMappings      ParentMapping[]
+  progresses          Progress[]
+  auditLogs           AuditLog[]
+
+  @@map("Tenant")
+}
+
+////////////////////////////
 // USER & ACCESS CONTROL
 ////////////////////////////
 
@@ -81,7 +120,12 @@ model LmsUser {
   name      String
   email     String   @unique
   phone     String?
+  avatar    String? // Added for user avatar
   createdAt DateTime @default(now())
+
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Link to Better Auth user
   betterAuthUserId String? @unique
@@ -89,12 +133,25 @@ model LmsUser {
 
   roles       UserRole[]
   enrollments Enrollment[]
-  attempts    Attempt[]
+  submissions Submission[]      @relation("StudentSubmissions")
+  progresses  Progress[]        @relation("StudentProgress")
+  auditLogs   AuditLog[]        @relation("AuditActor")
   analytics   StudentAnalytics?
   rankings    Ranking[]
 
-  coursesCreated Course[] @relation("CourseCreator")
+  // Teacher-owned courses
+  teacherCourses Course[] @relation("TeacherCourses")
 
+  // Student-specific profile (only for STUDENT role)
+  studentProfile StudentProfile?
+
+  // Parent-student mappings
+  parentMappings  ParentMapping[] @relation("ParentMappings")
+  studentMappings ParentMapping[] @relation("StudentMappings")
+  courses         Course[]
+
+  @@index([tenantId, id])
+  @@index([tenantId, email])
   @@map("User")
 }
 
@@ -102,7 +159,8 @@ model Role {
   id       String @id @default(uuid()) @db.Uuid
   roleName String
 
-  users UserRole[]
+  users     UserRole[]
+  auditLogs AuditLog[]
 }
 
 model UserRole {
@@ -115,6 +173,51 @@ model UserRole {
 }
 
 ////////////////////////////
+// STUDENT PROFILE (ROLE-BOUND)
+////////////////////////////
+
+model StudentProfile {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  classId   String   @db.Uuid
+  sectionId String?  @db.Uuid // Optional if sections exist
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user   LmsUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class  Class   @relation(fields: [classId], references: [id])
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@index([tenantId, classId])
+  @@map("StudentProfile")
+}
+
+////////////////////////////
+// PARENT-STUDENT MAPPING
+////////////////////////////
+
+model ParentMapping {
+  id            String   @id @default(uuid()) @db.Uuid
+  parentUserId  String   @db.Uuid
+  studentUserId String   @db.Uuid
+  tenantId      String   @db.Uuid
+  createdAt     DateTime @default(now())
+
+  // Relations
+  parent  LmsUser @relation("ParentMappings", fields: [parentUserId], references: [id], onDelete: Cascade)
+  student LmsUser @relation("StudentMappings", fields: [studentUserId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([parentUserId, studentUserId, tenantId])
+  @@index([tenantId, parentUserId])
+  @@index([tenantId, studentUserId])
+  @@map("ParentMapping")
+}
+
+////////////////////////////
 // ACADEMIC STRUCTURE
 ////////////////////////////
 
@@ -122,40 +225,123 @@ model Board {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   schools School[]
+
+  @@index([tenantId, id])
 }
 
 model School {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   boardId String @db.Uuid
   board   Board  @relation(fields: [boardId], references: [id])
 
   classes       Class[]
   subscriptions Subscription[]
+
+  @@index([tenantId, id])
 }
 
 model Class {
-  id   String @id @default(uuid()) @db.Uuid
-  name String
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  schoolId String @db.Uuid
-  school   School @relation(fields: [schoolId], references: [id])
+  // Multi-tenancy
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  subjects Subject[]
+  // Optional Board/School (for backward compatibility)
+  schoolId String? @db.Uuid
+  school   School? @relation(fields: [schoolId], references: [id])
+
+  // Relations
+  sections        Section[]
+  studentProfiles StudentProfile[]
+  classSubjects   ClassSubject[]
+  courses         Course[]
+
+  @@unique([name, tenantId])
+  @@index([tenantId, id])
+  @@map("Class")
 }
 
 model Subject {
-  id   String @id @default(uuid()) @db.Uuid
-  name String
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  classId String @db.Uuid
-  class   Class  @relation(fields: [classId], references: [id])
+  // Multi-tenancy
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  chapters Chapter[]
-  courses  Course[]
+  // Relations
+  classSubjects ClassSubject[]
+  chapters      Chapter[]
+  courses       Course[]
+
+  @@unique([name, tenantId])
+  @@index([tenantId, id])
+  @@map("Subject")
 }
+
+////////////////////////////
+// SECTION (OPTIONAL)
+////////////////////////////
+
+model Section {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  classId   String   @db.Uuid
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  class  Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([name, classId, tenantId])
+  @@index([tenantId, classId])
+  @@map("Section")
+}
+
+////////////////////////////
+// CLASS-SUBJECT MAPPING
+////////////////////////////
+
+model ClassSubject {
+  id        String   @id @default(uuid()) @db.Uuid
+  classId   String   @db.Uuid
+  subjectId String   @db.Uuid
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  // Relations
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, subjectId, tenantId])
+  @@index([tenantId, classId])
+  @@index([tenantId, subjectId])
+  @@map("ClassSubject")
+}
+
+////////////////////////////
+// CONTENT STRUCTURE
+////////////////////////////
 
 model Chapter {
   id   String @id @default(uuid()) @db.Uuid
@@ -176,59 +362,228 @@ model Topic {
 }
 
 ////////////////////////////
-// LMS CORE
+// LMS CORE - COURSES
 ////////////////////////////
 
 model Course {
-  id    String @id @default(uuid()) @db.Uuid
-  title String
+  id          String  @id @default(uuid()) @db.Uuid
+  title       String
+  description String? @db.Text
+  coverImage  String?
 
+  // Teacher ownership (required)
+  teacherId String  @db.Uuid
+  teacher   LmsUser @relation("TeacherCourses", fields: [teacherId], references: [id])
+
+  // Academic structure (required)
+  classId   String  @db.Uuid
   subjectId String  @db.Uuid
+  class     Class   @relation(fields: [classId], references: [id])
   subject   Subject @relation(fields: [subjectId], references: [id])
 
-  createdById String  @db.Uuid
-  createdBy   LmsUser @relation("CourseCreator", fields: [createdById], references: [id])
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  modules     Module[]
+  lessons     Lesson[]
   enrollments Enrollment[]
   assessments Assessment[]
+  lmsUser     LmsUser?     @relation(fields: [lmsUserId], references: [id])
+  lmsUserId   String?      @db.Uuid
+  progresses  Progress[]
+
+  @@index([tenantId, teacherId])
+  @@index([tenantId, classId])
+  @@index([tenantId, subjectId])
+  @@map("Course")
 }
+
+////////////////////////////
+// MODULES & LESSONS
+////////////////////////////
+
+enum ContentType {
+  VIDEO
+  TEXT
+  PDF
+}
+
+model Module {
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  orderIndex Int
+  courseId   String   @db.Uuid
+  tenantId   String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@unique([courseId, orderIndex])
+  @@index([tenantId, courseId])
+  @@map("Module")
+}
+
+model Lesson {
+  id          String      @id @default(uuid()) @db.Uuid
+  title       String
+  contentType ContentType
+  content     String      @db.Text
+  duration    Int? // In minutes
+
+  // Optional module association
+  moduleId String? @db.Uuid
+  module   Module? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+
+  // Required course association
+  courseId String @db.Uuid
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  tenantId   String     @db.Uuid
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  progresses Progress[]
+
+  @@index([tenantId, courseId])
+  @@index([tenantId, moduleId])
+  @@map("Lesson")
+}
+
+////////////////////////////
+// ENROLLMENT
+////////////////////////////
 
 model Enrollment {
   id       String @id @default(uuid()) @db.Uuid
   progress Float
   status   String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   userId  String  @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
 
   courseId String @db.Uuid
   course   Course @relation(fields: [courseId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, userId])
 }
 
 ////////////////////////////
 // ASSESSMENTS
 ////////////////////////////
 
-model Assessment {
-  id         String @id @default(uuid()) @db.Uuid
-  title      String
-  totalMarks Int
-
-  courseId String @db.Uuid
-  course   Course @relation(fields: [courseId], references: [id])
-
-  attempts Attempt[]
+enum AssessmentType {
+  MCQ
 }
 
-model Attempt {
-  id    String @id @default(uuid()) @db.Uuid
-  score Int
+enum SubmissionStatus {
+  PENDING
+  COMPLETED
+}
 
-  assessmentId String     @db.Uuid
-  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+model Assessment {
+  id        String         @id @default(uuid()) @db.Uuid
+  title     String
+  type      AssessmentType @default(MCQ)
+  dueDate   DateTime?
+  courseId  String         @db.Uuid
+  tenantId  String         @db.Uuid
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  userId  String  @db.Uuid
-  lmsUser LmsUser @relation(fields: [userId], references: [id])
+  // Relations
+  course      Course               @relation(fields: [courseId], references: [id])
+  tenant      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  questions   AssessmentQuestion[]
+  submissions Submission[]
+
+  @@index([tenantId, courseId])
+  @@map("Assessment")
+}
+
+model AssessmentQuestion {
+  id                 String   @id @default(uuid()) @db.Uuid
+  assessmentId       String   @db.Uuid
+  questionText       String   @db.Text
+  options            Json // Array of strings
+  correctOptionIndex Int
+  tenantId           String   @db.Uuid
+  createdAt          DateTime @default(now())
+
+  // Relations
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, assessmentId])
+  @@map("AssessmentQuestion")
+}
+
+model Submission {
+  id           String           @id @default(uuid()) @db.Uuid
+  assessmentId String           @db.Uuid
+  studentId    String           @db.Uuid
+  answers      Json // Array of selected indices
+  score        Int
+  status       SubmissionStatus @default(PENDING)
+  submittedAt  DateTime         @default(now())
+  tenantId     String           @db.Uuid
+
+  // Relations
+  assessment Assessment @relation(fields: [assessmentId], references: [id])
+  student    LmsUser    @relation("StudentSubmissions", fields: [studentId], references: [id])
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, studentId, tenantId])
+  @@index([tenantId, assessmentId])
+  @@index([tenantId, studentId])
+  @@map("Submission")
+}
+
+////////////////////////////
+// PROGRESS TRACKING
+////////////////////////////
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Progress {
+  id             String         @id @default(uuid()) @db.Uuid
+  studentId      String         @db.Uuid
+  lessonId       String         @db.Uuid
+  courseId       String         @db.Uuid
+  status         ProgressStatus @default(NOT_STARTED)
+  lastAccessedAt DateTime       @default(now())
+  tenantId       String         @db.Uuid
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  student LmsUser @relation("StudentProgress", fields: [studentId], references: [id])
+  lesson  Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId, tenantId])
+  @@index([tenantId, studentId])
+  @@index([tenantId, courseId])
+  @@index([tenantId, lessonId])
+  @@map("Progress")
 }
 
 ////////////////////////////
@@ -240,8 +595,14 @@ model StudentAnalytics {
   avgScore   Float
   weakTopics String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   userId  String  @unique @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, id])
 }
 
 model Ranking {
@@ -249,8 +610,57 @@ model Ranking {
   scope String
   rank  Int
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   userId  String  @db.Uuid
   lmsUser LmsUser @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, id])
+  @@index([tenantId, scope])
+  @@map("Ranking")
+}
+
+////////////////////////////
+// AUDIT LOGGING
+////////////////////////////
+
+enum ActionType {
+  // Admin actions
+  CLASS_CREATED
+  CLASS_UPDATED
+  SUBJECT_CREATED
+  SUBJECT_UPDATED
+  SUBJECT_MAPPED
+  USER_INVITED
+
+  // Teacher actions
+  COURSE_CREATED
+  LESSON_CREATED
+  ASSESSMENT_CREATED
+}
+
+model AuditLog {
+  id           String     @id @default(uuid()) @db.Uuid
+  actorId      String     @db.Uuid
+  actorRole    String // Store role name as string for audit trail
+  actionType   ActionType
+  resourceType String
+  resourceId   String?    @db.Uuid
+  metadata     Json?
+  tenantId     String     @db.Uuid
+  createdAt    DateTime   @default(now())
+
+  // Relations
+  actor  LmsUser @relation("AuditActor", fields: [actorId], references: [id])
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role   Role?   @relation(fields: [roleId], references: [id])
+  roleId String? @db.Uuid
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, actionType])
+  @@map("AuditLog")
 }
 
 ////////////////////////////
@@ -262,10 +672,16 @@ model Subscription {
   planName String
   status   String
 
+  // Multi-tenancy
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   schoolId String @db.Uuid
   school   School @relation(fields: [schoolId], references: [id])
 
   payments Payment[]
+
+  @@index([tenantId, id])
 }
 
 model Payment {

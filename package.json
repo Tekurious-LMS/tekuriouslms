@@ -7,7 +7,11 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "onboard:tenant": "ts-node scripts/onboard-tenant.ts"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -45,6 +49,7 @@
     "eslint-config-next": "16.0.10",
     "prisma": "^7.2.0",
     "tailwindcss": "^4.1.18",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

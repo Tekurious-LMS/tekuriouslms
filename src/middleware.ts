@@ -1,52 +1,124 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+/**
+ * Extract tenant slug from path-based URL
+ * Pattern: /t/{slug}/...
+ */
+function extractTenantSlug(pathname: string): string | null {
+    const match = pathname.match(/^\/t\/([^\/]+)/);
+    return match ? match[1] : null;
+}
+
+/**
+ * Check if route requires tenant resolution
+ */
+function requiresTenantResolution(pathname: string): boolean {
+    // Public routes
+    const publicRoutes = ["/", "/about", "/contact", "/services", "/pricing", "/blog", "/faq", "/resources"];
+    if (publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
+        return false;
+    }
+
+    // Auth routes
+    const authRoutes = ["/signup", "/login"];
+    if (authRoutes.some(route => pathname.startsWith(route))) {
+        return false;
+    }
+
+    // Auth API routes
+    if (pathname.startsWith("/api/auth")) {
+        return false;
+    }
+
+    // Static files
+    if (pathname.startsWith("/_next") || pathname.startsWith("/static") || pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/)) {
+        return false;
+    }
+
+    return true;
+}
+
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Get session cookie
-    const sessionToken = request.cookies.get("better-auth.session_token");
+    // ========================================
+    // TENANT RESOLUTION (BEFORE AUTH)
+    // ========================================
 
-    // Public routes that don't require authentication
-    const publicRoutes = ["/", "/about", "/contact", "/services", "/pricing", "/blog", "/faq", "/resources"];
-    const authRoutes = ["/signup", "/login"];
+    // Check if this route requires tenant resolution
+    if (requiresTenantResolution(pathname)) {
+        const tenantSlug = extractTenantSlug(pathname);
 
-    // Allow public routes
-    if (publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
-        return NextResponse.next();
-    }
-
-    // Allow auth routes
-    if (authRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.next();
-    }
-
-    // Protect dashboard routes - require authentication
-    const isDashboardRoute =
-        pathname.startsWith("/(dashboard)") ||
-        pathname.startsWith("/admin") ||
-        pathname.startsWith("/teacher") ||
-        pathname.startsWith("/student") ||
-        pathname.startsWith("/parent") ||
-        pathname === "/dashboard";
-
-    if (isDashboardRoute) {
-        if (!sessionToken) {
-            // Redirect to login if not authenticated
-            const url = request.nextUrl.clone();
-            url.pathname = "/signup";
-            return NextResponse.redirect(url);
+        if (!tenantSlug) {
+            // No tenant slug in URL - this is an error for tenant-required routes
+            return new NextResponse(
+                JSON.stringify({
+                    error: "Not Found",
+                    message: "Invalid URL format. Expected: /t/{tenant-slug}/...",
+                }),
+                {
+                    status: 404,
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
         }
 
-        // Fetch session to check role
-        // Note: In middleware we can't easily enable the full session check without making an API call
-        // For better performance, we'll trust the session token exists for now
-        // and let the page layouts handle the fine-grained role redirection
-        // or we could decode the token if it were a JWT, but Better Auth uses opaque tokens by default
+        // Store tenant slug in request headers for downstream use
+        // Note: We don't validate against database here (Edge Runtime limitation)
+        // Validation happens in API routes and page handlers
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("x-tenant-slug", tenantSlug);
 
-        // However, for strict role separation, we should consider fetching session here
-        // But for this step, we will rely on the page-level checks we added to dashboard pages
-        // to redirect back if role doesn't match.
+        // Continue to auth protection below instead of returning early
+        // This ensures tenant-scoped dashboard routes are also auth-protected
+
+        // ========================================
+        // AUTH PROTECTION (AFTER TENANT)
+        // ========================================
+
+        // Protected dashboard routes require authentication
+        // Use regex to match exact path segments to avoid false positives
+        // (e.g., /t/admin-school/courses should NOT match "/admin")
+        const dashboardRoutePattern = /^\/t\/[^/]+\/(admin|teacher|student|parent)(\/|$)/;
+        const isDashboardRoute = dashboardRoutePattern.test(pathname);
+
+        if (isDashboardRoute) {
+            // Check for session token
+            const sessionToken = request.cookies.get("better-auth.session_token");
+
+            if (!sessionToken) {
+                // No session - redirect to signup
+                const signupUrl = new URL("/signup", request.url);
+                return NextResponse.redirect(signupUrl);
+            }
+        }
+
+        // Return with tenant headers set
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+    }
+
+    // ========================================
+    // AUTH PROTECTION (FOR NON-TENANT ROUTES)
+    // ========================================
+
+    // Protected dashboard routes require authentication
+    const dashboardRoutes = ["/admin", "/teacher", "/student", "/parent"];
+    const isDashboardRoute = dashboardRoutes.some(route => pathname.includes(route));
+
+    if (isDashboardRoute) {
+        // Check for session token
+        const sessionToken = request.cookies.get("better-auth.session_token");
+
+        if (!sessionToken) {
+            // No session - redirect to signup
+            const signupUrl = new URL("/signup", request.url);
+            return NextResponse.redirect(signupUrl);
+        }
     }
 
     return NextResponse.next();
