@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, School, ShieldAlert } from "lucide-react";
 import { useUsersQuery } from "@/hooks/use-api";

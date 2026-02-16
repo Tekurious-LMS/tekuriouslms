@@ -158,15 +158,25 @@ function AuditLogTable({ logs }: { logs: AuditLogEntry[] }) {
 }
 
 export default async function AdminDashboardPage() {
-  try {
-    const context = await requireServerRBAC([Role.ADMIN]);
+  let context: Awaited<ReturnType<typeof requireServerRBAC>>;
+  let analytics: Awaited<ReturnType<typeof getAdminAnalytics>>;
+  let auditResult: Awaited<ReturnType<typeof getAuditLogs>>;
 
-    const [analytics, auditResult] = await Promise.all([
+  try {
+    context = await requireServerRBAC([Role.ADMIN]);
+    [analytics, auditResult] = await Promise.all([
       getAdminAnalytics(context),
       getAuditLogs(context, 1, 10),
     ]);
+  } catch {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Unauthorized access to Admin Dashboard
+      </div>
+    );
+  }
 
-    const adoptionMetrics = [
+  const adoptionMetrics = [
       {
         label: "Student Enrollment",
         value: Math.round(
@@ -331,11 +341,4 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
     );
-  } catch {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Unauthorized access to Admin Dashboard
-      </div>
-    );
-  }
 }

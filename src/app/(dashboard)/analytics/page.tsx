@@ -1,5 +1,3 @@
-"use client";
-
 import { PerformanceChart } from "@/components/analytics/PerformanceChart";
 import { RankingTable } from "@/components/analytics/RankingTable";
 import { WeakTopicsCard } from "@/components/analytics/WeakTopicsCard";

@@ -18,46 +18,56 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
+  // CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress";
 import { ARCreationSection } from "@/components/placeholders/ARCreationSection";
 import { AIInsightsSection } from "@/components/placeholders/AIInsightsSection";
 
 export default async function TeacherDashboard() {
+  let context: Awaited<ReturnType<typeof requireServerRBAC>>;
+  let analytics: Awaited<ReturnType<typeof getTeacherAnalytics>>;
+
   try {
-    const context = await requireServerRBAC([Role.TEACHER]);
-    const analytics = await getTeacherAnalytics(context);
-
-    const courses = analytics.courses;
-    const totalStudents = courses.reduce(
-      (sum, c) => sum + c.enrollmentCount,
-      0,
-    );
-    const avgCompletion =
-      courses.length > 0
-        ? Math.round(
-            courses.reduce((sum, c) => sum + c.averageCompletionRate, 0) /
-              courses.length,
-          )
-        : 0;
-    const pendingReviews = courses.reduce(
-      (sum, c) =>
-        sum +
-        Math.max(
-          0,
-          c.enrollmentCount -
-            Math.round(
-              c.enrollmentCount * (c.assessmentParticipation / 100 || 0),
-            ),
-        ),
-      0,
-    );
-
+    context = await requireServerRBAC([Role.TEACHER]);
+    analytics = await getTeacherAnalytics(context);
+  } catch {
     return (
+      <div className="p-8 text-center text-muted-foreground">
+        Unauthorized access to Teacher Dashboard
+      </div>
+    );
+  }
+
+  const courses = analytics.courses;
+  const totalStudents = courses.reduce(
+      (sum, c) => sum + c.enrollmentCount,
+    0,
+  );
+  const avgCompletion =
+    courses.length > 0
+      ? Math.round(
+          courses.reduce((sum, c) => sum + c.averageCompletionRate, 0) /
+            courses.length,
+        )
+      : 0;
+  const pendingReviews = courses.reduce(
+    (sum, c) =>
+      sum +
+      Math.max(
+        0,
+        c.enrollmentCount -
+          Math.round(
+            c.enrollmentCount * (c.assessmentParticipation / 100 || 0),
+          ),
+      ),
+    0,
+  );
+
+  return (
       <div className="w-full min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <div className="space-y-6">
@@ -321,11 +331,4 @@ export default async function TeacherDashboard() {
         </div>
       </div>
     );
-  } catch {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Unauthorized access to Teacher Dashboard
-      </div>
-    );
-  }
 }

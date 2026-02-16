@@ -10,9 +10,7 @@ export interface EnrichedSession {
   session: { id: string; userId: string; expiresAt: Date };
 }
 
-async function fetchEnrichedSession(
-  supabaseUser: { id: string },
-): Promise<EnrichedSession | null> {
+async function fetchEnrichedSession(): Promise<EnrichedSession | null> {
   const res = await fetch("/api/auth/session");
   if (!res.ok) return null;
   const data = await res.json();
@@ -34,7 +32,7 @@ export function useSession() {
         setIsPending(false);
         return;
       }
-      const enriched = await fetchEnrichedSession(user);
+      const enriched = await fetchEnrichedSession();
       setSession(enriched);
       setIsPending(false);
     };
@@ -51,7 +49,7 @@ export function useSession() {
         setSession(null);
         return;
       }
-      const enriched = await fetchEnrichedSession(user);
+      const enriched = await fetchEnrichedSession();
       setSession(enriched);
     });
 

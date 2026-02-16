@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
 import { useSession } from "@/lib/auth-client";
 import type { SessionUser } from "@/lib/auth-types";
 

@@ -1,8 +1,6 @@
-"use client";
-
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { School, GraduationCap, BookOpen, Layers, Plus } from "lucide-react";
+import { School, BookOpen, Layers, Plus } from "lucide-react";
 import { StructureActions } from "./StructureActions";
 import { useStructureQuery } from "@/hooks/use-api";
 

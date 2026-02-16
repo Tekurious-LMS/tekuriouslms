@@ -19,28 +19,38 @@ import { Progress } from "@/components/ui/progress";
 import { ARLearningSection } from "@/components/placeholders/ARLearningSection";
 
 export default async function StudentDashboard() {
+  let context: Awaited<ReturnType<typeof requireServerRBAC>>;
+  let progress: Awaited<ReturnType<typeof getStudentProgress>>;
+
   try {
-    const context = await requireServerRBAC([Role.STUDENT]);
-    const progress = await getStudentProgress(context, context.userId);
-
-    const courses = progress.courses;
-    const assessments = progress.assessments;
-    const enrolledCount = courses.length;
-    const completedLessons = courses.reduce(
-      (sum, c) => sum + c.completedLessons,
-      0,
-    );
-    const pendingAssessments = assessments.filter((a) => !a.completed).length;
-    const completionRate =
-      courses.length > 0
-        ? Math.round(
-            (courses.reduce((s, c) => s + c.completedLessons, 0) /
-              courses.reduce((s, c) => s + c.totalLessons, 0)) *
-              100,
-          )
-        : 0;
-
+    context = await requireServerRBAC([Role.STUDENT]);
+    progress = await getStudentProgress(context, context.userId);
+  } catch {
     return (
+      <div className="p-8 text-center text-muted-foreground">
+        Unauthorized access to Student Dashboard
+      </div>
+    );
+  }
+
+  const courses = progress.courses;
+  const assessments = progress.assessments;
+  const enrolledCount = courses.length;
+  const completedLessons = courses.reduce(
+    (sum, c) => sum + c.completedLessons,
+    0,
+  );
+  const pendingAssessments = assessments.filter((a) => !a.completed).length;
+  const completionRate =
+    courses.length > 0
+      ? Math.round(
+          (courses.reduce((s, c) => s + c.completedLessons, 0) /
+            courses.reduce((s, c) => s + c.totalLessons, 0)) *
+            100,
+        )
+      : 0;
+
+  return (
       <div className="w-full min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <div>
@@ -142,11 +152,4 @@ export default async function StudentDashboard() {
         </div>
       </div>
     );
-  } catch {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Unauthorized access to Student Dashboard
-      </div>
-    );
-  }
 }

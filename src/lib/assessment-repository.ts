@@ -9,7 +9,32 @@ import { RBACContext } from "./rbac-guard";
 import { Role } from "./rbac-types";
 import { ForbiddenError, ResourceNotFoundError } from "./rbac-errors";
 import { logAudit, ActionType } from "./audit-logger";
-import { Assessment, Submission } from "@prisma/client";
+
+/** Assessment model shape (aligned with Prisma schema) */
+interface Assessment {
+  id: string;
+  title: string;
+  type: "MCQ";
+  totalMarks: number;
+  dueDate: Date | null;
+  courseId: string;
+  tenantId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Submission model shape (aligned with Prisma schema) */
+interface Submission {
+  id: string;
+  attemptNumber: number;
+  assessmentId: string;
+  studentId: string;
+  answers: unknown;
+  score: number;
+  status: string;
+  submittedAt: Date;
+  tenantId: string;
+}
 
 /** Submission plus total question count (e.g. from submitAssessment) */
 export type SubmissionWithTotal = Submission & { totalQuestions: number };
@@ -110,10 +135,11 @@ export async function getAssessments(
     });
 
     return assessments.map(
-      (a): Assessment => ({
+      (a: (typeof assessments)[number]): Assessment => ({
         id: a.id,
         title: a.title,
         type: a.type,
+        totalMarks: a.totalMarks ?? 100,
         dueDate: a.dueDate,
         courseId: a.courseId,
         tenantId: a.tenantId,
@@ -149,8 +175,8 @@ export async function getAssessments(
     });
 
     const classIds = parentMappings
-      .map((m) => m.student.studentProfile?.classId)
-      .filter((id): id is string => !!id);
+      .map((m: (typeof parentMappings)[number]) => m.student.studentProfile?.classId)
+      .filter((id: string | undefined): id is string => !!id);
 
     if (classIds.length === 0) {
       return [];
@@ -494,7 +520,7 @@ export async function getSubmissions(
   });
 
   return submissions.map(
-    (s): SubmissionWithTotal =>
+    (s: (typeof submissions)[number]): SubmissionWithTotal =>
       ({
         id: s.id,
         assessmentId: s.assessmentId,

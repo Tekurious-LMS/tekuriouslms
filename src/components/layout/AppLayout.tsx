@@ -1,5 +1,3 @@
-"use client";
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import {

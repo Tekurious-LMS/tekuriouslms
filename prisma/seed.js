@@ -4,7 +4,7 @@
  * Idempotent: safe to run multiple times.
  */
 
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const ROLES = [
@@ -55,7 +55,7 @@ async function main() {
 
   // 4. Classes & Subjects
   const classes = await Promise.all(
-    ["Class 9", "Class 10", "Class 11"].map(async (name, i) => {
+    ["Class 9", "Class 10", "Class 11"].map(async (name) => {
       const c = await prisma.class.findFirst({
         where: { name, tenantId },
       });

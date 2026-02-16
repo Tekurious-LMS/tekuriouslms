@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useUsersQuery } from "@/hooks/use-api";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 
 function flattenStudents(
   data:
@@ -38,18 +38,6 @@ export function AttendanceSheet({
   const { data: usersData } = useUsersQuery(isOpen);
   const students = useMemo(() => flattenStudents(usersData), [usersData]);
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    if (students.length > 0) {
-      setAttendance((prev) => {
-        const next = { ...prev };
-        for (const s of students) {
-          if (!(s.id in next)) next[s.id] = true;
-        }
-        return next;
-      });
-    }
-  }, [students]);
 
   const toggleAttendance = (studentId: string) => {
     setAttendance((prev) => ({ ...prev, [studentId]: !prev[studentId] }));

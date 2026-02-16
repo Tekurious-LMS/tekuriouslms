@@ -58,6 +58,6 @@ export async function getSession(): Promise<{
 /** API-compatible wrapper for compatibility with existing code */
 export const auth = {
   api: {
-    getSession: async (_opts?: { headers?: Headers }) => getSession(),
+    getSession: async () => getSession(),
   },
 };
