@@ -26,8 +26,8 @@ import {
   Upload,
 } from "lucide-react";
 import { CourseCard } from "@/components/courses/CourseCard";
-import { courses } from "@/lib/mockData";
 import { UserStats } from "@/components/users/UserStats";
+import { useCoursesQuery } from "@/hooks/use-api";
 
 type Role = "Admin" | "Teacher" | "Student" | "Parent";
 
@@ -74,6 +74,8 @@ export function RoleDashboard() {
 }
 
 function StudentView() {
+  const { data: courses, isLoading } = useCoursesQuery();
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -86,7 +88,9 @@ function StudentView() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "—" : courses?.length ?? 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -123,9 +127,18 @@ function StudentView() {
         <div className="md:col-span-2 space-y-6">
           <h2 className="text-xl font-semibold">My Courses</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {courses.slice(0, 2).map((c) => (
-              <CourseCard key={c.id} course={c} />
-            ))}
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="h-48 bg-muted animate-pulse rounded-lg" />
+                <div className="h-48 bg-muted animate-pulse rounded-lg" />
+              </div>
+            ) : courses?.length === 0 ? (
+              <p className="text-muted-foreground">No courses enrolled.</p>
+            ) : (
+              (courses ?? []).slice(0, 4).map((c) => (
+                <CourseCard key={c.id} course={c} />
+              ))
+            )}
           </div>
         </div>
         <div className="space-y-6">

@@ -4,6 +4,7 @@ import { handleTenantError, TenantNotFoundError } from "./api-errors";
 import { prisma } from "./prisma";
 import { RBACContext, requireRole } from "./rbac-guard";
 import { Role } from "./rbac-types";
+import { toRBACRole } from "./role-mapping";
 import { handleRBACError, UnauthenticatedError } from "./rbac-errors";
 import { auth } from "./auth";
 
@@ -16,11 +17,14 @@ export async function withTenantContext(
   handler: (context: TenantContext) => Promise<Response>,
 ): Promise<Response> {
   try {
-    // Get tenant slug from header (set by proxy)
-    const tenantSlug = request.headers.get("x-tenant-slug");
-
+    // Get tenant slug from header or session (for non-prefixed routes)
+    let tenantSlug = request.headers.get("x-tenant-slug");
     if (!tenantSlug) {
-      throw new TenantNotFoundError("Tenant slug not found in request headers");
+      const session = await auth.api.getSession();
+      tenantSlug = session?.user?.tenantSlug ?? null;
+    }
+    if (!tenantSlug) {
+      throw new TenantNotFoundError("Tenant slug not found in request headers or session");
     }
 
     // Validate tenant exists in database
@@ -105,10 +109,20 @@ export async function withRBACContext(
   handler: (context: RBACContext) => Promise<Response>,
 ): Promise<Response> {
   try {
-    // Step 1: Tenant Resolution
-    const tenantSlug = request.headers.get("x-tenant-slug");
+    // Step 1: Authentication (needed for tenant fallback)
+    const session = await auth.api.getSession();
+
+    if (!session?.user) {
+      throw new UnauthenticatedError("Authentication required");
+    }
+
+    // Step 2: Tenant Resolution - header first, then session (for non-prefixed routes)
+    let tenantSlug = request.headers.get("x-tenant-slug");
+    if (!tenantSlug && session.user.tenantSlug) {
+      tenantSlug = session.user.tenantSlug;
+    }
     if (!tenantSlug) {
-      throw new TenantNotFoundError("Tenant slug not found in request headers");
+      throw new TenantNotFoundError("Tenant slug not found. Provide x-tenant-slug header or ensure user has tenant.");
     }
 
     const tenant = await prisma.tenant.findUnique({
@@ -119,11 +133,9 @@ export async function withRBACContext(
       throw new TenantNotFoundError(`Tenant not found: ${tenantSlug}`);
     }
 
-    // Step 2: Authentication
-    const session = await auth.api.getSession();
-
-    if (!session?.user) {
-      throw new UnauthenticatedError("Authentication required");
+    // Step 3: Verify user belongs to this tenant (security)
+    if (session.user.tenantId && session.user.tenantId !== tenant.id) {
+      throw new TenantNotFoundError("User does not belong to this tenant");
     }
 
     // Get LmsUser with role information
@@ -145,8 +157,9 @@ export async function withRBACContext(
       throw new UnauthenticatedError("User not found in this tenant");
     }
 
-    // Get user's role
-    const userRole = lmsUser.roles[0]?.role?.roleName as Role;
+    // Get user's role (backend: Platform Admin, School Admin, etc.)
+    const backendRole = lmsUser.roles[0]?.role?.roleName ?? null;
+    const userRole = toRBACRole(backendRole) as Role;
 
     if (!userRole) {
       throw new UnauthenticatedError("User role not assigned");

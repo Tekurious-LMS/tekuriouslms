@@ -20,31 +20,48 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Edit2, Trash2, Search } from "lucide-react";
-import { users, schools } from "@/lib/mockData";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AddUserDialog } from "./AddUserDialog";
 import { VariantProps } from "class-variance-authority";
 import { badgeVariants } from "@/components/ui/badge";
+import { useUsersQuery } from "@/hooks/use-api";
+
+type UserItem = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
+function flattenUsers(
+  data: { admins: UserItem[]; teachers: UserItem[]; students: UserItem[]; parents: UserItem[] } | undefined,
+): UserItem[] {
+  if (!data) return [];
+  return [
+    ...data.admins,
+    ...data.teachers,
+    ...data.students,
+    ...data.parents,
+  ];
+}
 
 export function UserList() {
+  const { data: usersData, isLoading } = useUsersQuery();
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [schoolFilter, setSchoolFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredUsers = users.filter((user) => {
-    const matchesRole =
-      roleFilter === "all" || user.role.toLowerCase() === roleFilter;
-    const matchesSchool =
-      schoolFilter === "all" || user.schoolId === schoolFilter;
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+  const allUsers = useMemo(() => flattenUsers(usersData), [usersData]);
 
-    // Admins might not belong to a school, so if filtering by school, keep that in mind
-    // For this simple logic, if schoolFilter is set, we strictly check schoolId.
-
-    return matchesRole && matchesSchool && matchesSearch;
-  });
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter((user) => {
+      const matchesRole =
+        roleFilter === "all" || user.role.toLowerCase() === roleFilter;
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesRole && matchesSearch;
+    });
+  }, [allUsers, roleFilter, searchQuery]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -83,19 +100,6 @@ export function UserList() {
               <SelectItem value="student">Student</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={schoolFilter} onValueChange={setSchoolFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter School" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Schools</SelectItem>
-              {schools.map((school) => (
-                <SelectItem key={school.id} value={school.id}>
-                  {school.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
         <AddUserDialog />
       </div>
@@ -106,14 +110,19 @@ export function UserList() {
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.length === 0 ? (
+            {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={3} className="h-24 text-center">
+                  Loading users...
+                </TableCell>
+              </TableRow>
+            ) : filteredUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="h-24 text-center">
                   No users found.
                 </TableCell>
               </TableRow>
@@ -151,16 +160,6 @@ export function UserList() {
                     >
                       {user.role}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`h-2 w-2 rounded-full ${user.status === "Active" ? "bg-green-500" : "bg-slate-300"}`}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {user.status}
-                      </span>
-                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

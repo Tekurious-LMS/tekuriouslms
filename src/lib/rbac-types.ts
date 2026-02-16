@@ -83,10 +83,15 @@ export const RoleCapabilities = {
 } as const;
 
 /**
- * Type guard to check if a string is a valid Role
+ * Type guard to check if a string is a valid Role.
+ * Accepts both enum values (ADMIN, TEACHER...) and backend roles (Platform Admin, School Admin)
+ * which map to ADMIN.
  */
 export function isValidRole(role: string): role is Role {
-  return Object.values(Role).includes(role as Role);
+  if (Object.values(Role).includes(role as Role)) return true;
+  // Backend admin roles map to ADMIN
+  if (role === "Platform Admin" || role === "School Admin") return true;
+  return false;
 }
 
 /**

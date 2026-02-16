@@ -7,6 +7,7 @@
 import { prisma } from "./prisma";
 import { RBACContext } from "./rbac-guard";
 import { Role } from "./rbac-types";
+import { toRBACRole, normalizeRoleForUI } from "./role-mapping";
 import { ResourceNotFoundError } from "./rbac-errors";
 
 // Infer Prisma model types from client (avoids @prisma/client export resolution)
@@ -249,17 +250,20 @@ export async function getAllUsersByRole(context: RBACContext): Promise<{
 
   type UserWithRoles = (typeof users)[number];
   users.forEach((user: UserWithRoles) => {
-    const roles = user.roles.map(
-      (r: UserWithRoles["roles"][number]) => r.role.roleName as Role,
+    const backendRoles = user.roles.map(
+      (r: UserWithRoles["roles"][number]) => r.role.roleName,
+    );
+    const rbacRole = toRBACRole(backendRoles[0] ?? null) as Role;
+    const displayRoles = user.roles.map((r) =>
+      normalizeRoleForUI(r.role.roleName) ?? r.role.roleName,
     );
     const userData = {
       ...user,
-      roles: user.roles.map(
-        (r: UserWithRoles["roles"][number]) => r.role.roleName as Role,
-      ),
+      roles: displayRoles,
+      role: displayRoles[0] ?? "Student",
     } as unknown as LmsUser;
 
-    switch (roles[0] as Role) {
+    switch (rbacRole) {
       case Role.ADMIN:
         grouped.admins.push(userData);
         break;

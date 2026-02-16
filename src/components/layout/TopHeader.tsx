@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Menu, Moon, Search, Sun, User } from "lucide-react";
+import { Bell, Moon, Search, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,10 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { SidebarNavigation } from "./SidebarNavigation";
 import { Logo } from "@/components/ui/Logo";
 import { useTenant } from "@/contexts/TenantContext";
 import { signOut } from "@/lib/auth-client";
@@ -51,23 +50,15 @@ export function TopHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6 shadow-sm">
-      <div className="flex items-center gap-2 md:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
-            <SidebarNavigation mobile />
-          </SheetContent>
-        </Sheet>
-        <Logo />
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 shadow-sm">
+      <div className="flex shrink-0 items-center gap-2">
+        <SidebarTrigger className="-ml-1" />
+        <div className="md:hidden max-w-[140px]">
+          <Logo />
+        </div>
       </div>
 
-      <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="hidden md:flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">
           Home
         </Link>
@@ -80,11 +71,11 @@ export function TopHeader() {
           </>
         )}
         {breadcrumbs.map((crumb) => (
-          <div key={crumb.href} className="flex items-center gap-2">
+          <div key={crumb.href} className="flex shrink-0 items-center gap-2">
             <span>/</span>
             <Link
               href={crumb.href}
-              className="hover:text-foreground transition-colors font-medium text-foreground"
+              className="truncate hover:text-foreground transition-colors font-medium text-foreground"
             >
               {crumb.label}
             </Link>
@@ -92,13 +83,13 @@ export function TopHeader() {
         ))}
       </div>
 
-      <div className="ml-auto flex items-center gap-4">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
         <div className="relative hidden sm:block">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
             type="search"
             placeholder="Search..."
-            className="h-9 w-64 rounded-md border border-input bg-transparent pl-9 pr-4 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-9 w-40 sm:w-48 lg:w-64 rounded-md border border-input bg-transparent pl-9 pr-4 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 

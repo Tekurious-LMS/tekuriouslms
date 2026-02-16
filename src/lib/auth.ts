@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "./auth-types";
+import { normalizeRoleForUI } from "./role-mapping";
 
 /**
  * Get the current Supabase session with LMS user enrichment (role, tenant).
  * Uses getUser() for server-side validation (getSession() user is unvalidated).
+ * Role is normalized for UI: Platform Admin / School Admin → "Admin"
  */
 export async function getSession(): Promise<{
   user: SessionUser | null;
@@ -25,7 +27,8 @@ export async function getSession(): Promise<{
     },
   });
 
-  const primaryRole = lmsUser?.roles?.[0]?.role?.roleName ?? null;
+  const backendRole = lmsUser?.roles?.[0]?.role?.roleName ?? null;
+  const primaryRole = normalizeRoleForUI(backendRole) ?? backendRole;
 
   const sessionUser: SessionUser = {
     id: user.id,

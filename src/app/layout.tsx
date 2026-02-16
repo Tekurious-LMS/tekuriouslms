@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { QueryProvider } from "@/providers/query-provider";
 
 const notoSans = Noto_Sans({ variable: "--font-sans", subsets: ["latin"] });
 
@@ -57,7 +58,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <QueryProvider>
           <TenantProvider>{children}</TenantProvider>
+        </QueryProvider>
         </ThemeProvider>
         <Toaster />
         <Analytics />

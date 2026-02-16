@@ -48,10 +48,19 @@ model Tenant {
   studentAnalytics    StudentAnalytics[]
   rankings            Ranking[]
   subscriptions       Subscription[]
+  payments            Payment[]
   studentProfiles     StudentProfile[]
   parentMappings      ParentMapping[]
   progresses          Progress[]
   auditLogs           AuditLog[]
+  notices             Notice[]
+  notifications       Notification[]
+  scheduledClasses    ScheduledClass[]
+  classSessions       ClassSession[]
+  attendances         Attendance[]
+  usageLogs           UsageLog[]
+  chapters            Chapter[]
+  topics              Topic[]
 
   @@map("Tenant")
 }
@@ -84,7 +93,8 @@ model LmsUser {
   rankings    Ranking[]
 
   // Teacher-owned courses
-  teacherCourses Course[] @relation("TeacherCourses")
+  teacherCourses            Course[]         @relation("TeacherCourses")
+  scheduledClassesAsTeacher ScheduledClass[] @relation("TeacherScheduledClasses")
 
   // Student-specific profile (only for STUDENT role)
   studentProfile StudentProfile?
@@ -121,13 +131,15 @@ model UserRole {
 ////////////////////////////
 
 model StudentProfile {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @db.Uuid
-  classId   String   @db.Uuid
-  sectionId String?  @db.Uuid // Optional if sections exist
-  tenantId  String   @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @db.Uuid
+  classId         String   @db.Uuid
+  sectionId       String?  @db.Uuid // Optional if sections exist
+  tenantId        String   @db.Uuid
+  academicHistory Json? // JSON: previous grades, schools, etc.
+  engagementScore Float? // Overall engagement metric 0-100
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
   user   LmsUser @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -288,21 +300,36 @@ model ClassSubject {
 ////////////////////////////
 
 model Chapter {
-  id   String @id @default(uuid()) @db.Uuid
-  name String
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  orderIndex Int      @default(0)
+  subjectId  String   @db.Uuid
+  tenantId   String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  subjectId String  @db.Uuid
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  topics  Topic[]
 
-  topics Topic[]
+  @@index([tenantId, subjectId])
+  @@map("Chapter")
 }
 
 model Topic {
-  id   String @id @default(uuid()) @db.Uuid
-  name String
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  orderIndex Int      @default(0)
+  chapterId  String   @db.Uuid
+  tenantId   String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  chapterId String  @db.Uuid
-  chapter   Chapter @relation(fields: [chapterId], references: [id])
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, chapterId])
+  @@map("Topic")
 }
 
 ////////////////////////////
@@ -333,13 +360,14 @@ model Course {
   updatedAt DateTime @updatedAt
 
   // Relations
-  modules     Module[]
-  lessons     Lesson[]
-  enrollments Enrollment[]
-  assessments Assessment[]
-  lmsUser     LmsUser?     @relation(fields: [lmsUserId], references: [id])
-  lmsUserId   String?      @db.Uuid
-  progresses  Progress[]
+  modules          Module[]
+  lessons          Lesson[]
+  enrollments      Enrollment[]
+  assessments      Assessment[]
+  lmsUser          LmsUser?         @relation(fields: [lmsUserId], references: [id])
+  lmsUserId        String?          @db.Uuid
+  progresses       Progress[]
+  scheduledClasses ScheduledClass[]
 
   @@index([tenantId, teacherId])
   @@index([tenantId, classId])
@@ -406,10 +434,15 @@ model Lesson {
 // ENROLLMENT
 ////////////////////////////
 
+enum EnrollmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Enrollment {
-  id       String @id @default(uuid()) @db.Uuid
-  progress Float
-  status   String
+  id       String           @id @default(uuid()) @db.Uuid
+  progress Float            @default(0)
+  status   EnrollmentStatus @default(ACTIVE)
 
   // Multi-tenancy
   tenantId String @db.Uuid
@@ -423,6 +456,8 @@ model Enrollment {
 
   @@index([tenantId, id])
   @@index([tenantId, userId])
+  @@index([tenantId, courseId])
+  @@map("Enrollment")
 }
 
 ////////////////////////////
@@ -439,14 +474,15 @@ enum SubmissionStatus {
 }
 
 model Assessment {
-  id        String         @id @default(uuid()) @db.Uuid
-  title     String
-  type      AssessmentType @default(MCQ)
-  dueDate   DateTime?
-  courseId  String         @db.Uuid
-  tenantId  String         @db.Uuid
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id         String         @id @default(uuid()) @db.Uuid
+  title      String
+  type       AssessmentType @default(MCQ)
+  totalMarks Int            @default(100) // SOP: Total marks for the assessment
+  dueDate    DateTime?
+  courseId   String         @db.Uuid
+  tenantId   String         @db.Uuid
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   // Relations
   course      Course               @relation(fields: [courseId], references: [id])
@@ -475,24 +511,26 @@ model AssessmentQuestion {
   @@map("AssessmentQuestion")
 }
 
+// Attempt module: multiple attempts per student per assessment (SOP)
 model Submission {
-  id           String           @id @default(uuid()) @db.Uuid
-  assessmentId String           @db.Uuid
-  studentId    String           @db.Uuid
-  answers      Json // Array of selected indices
-  score        Int
-  status       SubmissionStatus @default(PENDING)
-  submittedAt  DateTime         @default(now())
-  tenantId     String           @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
+  attemptNumber Int              @default(1) // Tracks attempt sequence for historical records
+  assessmentId  String           @db.Uuid
+  studentId     String           @db.Uuid
+  answers       Json // Array of selected indices
+  score         Int
+  status        SubmissionStatus @default(PENDING)
+  submittedAt   DateTime         @default(now())
+  tenantId      String           @db.Uuid
 
   // Relations
   assessment Assessment @relation(fields: [assessmentId], references: [id])
   student    LmsUser    @relation("StudentSubmissions", fields: [studentId], references: [id])
   tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@unique([assessmentId, studentId, tenantId])
   @@index([tenantId, assessmentId])
   @@index([tenantId, studentId])
+  @@index([assessmentId, studentId, attemptNumber])
   @@map("Submission")
 }
 
@@ -629,10 +667,173 @@ model Subscription {
 }
 
 model Payment {
-  id     String @id @default(uuid()) @db.Uuid
-  amount Float
-  status String
+  id       String   @id @default(uuid()) @db.Uuid
+  amount   Float
+  status   String
+  paidAt   DateTime @default(now())
+  tenantId String   @db.Uuid
 
   subscriptionId String       @db.Uuid
   subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("Payment")
+}
+
+////////////////////////////
+// NOTICE MANAGEMENT (SOP §10)
+////////////////////////////
+
+enum NoticeCategory {
+  GENERAL
+  URGENT
+  ACADEMIC
+  ADMINISTRATIVE
+}
+
+model Notice {
+  id          String         @id @default(uuid()) @db.Uuid
+  title       String
+  content     String         @db.Text
+  category    NoticeCategory @default(GENERAL)
+  targetRoles Json // JSON array: ["Student","Teacher"] etc.
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  tenantId    String         @db.Uuid
+  createdBy   String         @db.Uuid
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  readReceipts NoticeReadReceipt[]
+
+  @@index([tenantId, publishedAt])
+  @@index([tenantId, category])
+  @@map("Notice")
+}
+
+model NoticeReadReceipt {
+  id       String   @id @default(uuid()) @db.Uuid
+  noticeId String   @db.Uuid
+  userId   String   @db.Uuid
+  readAt   DateTime @default(now())
+  tenantId String   @db.Uuid
+
+  notice Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, userId])
+  @@index([tenantId])
+  @@map("NoticeReadReceipt")
+}
+
+////////////////////////////
+// NOTIFICATION SYSTEM (SOP §9)
+////////////////////////////
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  title     String
+  body      String   @db.Text
+  type      String   @default("system") // system, course, assessment, etc.
+  read      Boolean  @default(false)
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@index([tenantId, read])
+  @@map("Notification")
+}
+
+////////////////////////////
+// CLASS SCHEDULING (SOP §7)
+////////////////////////////
+
+enum ScheduledClassStatus {
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+model ScheduledClass {
+  id          String               @id @default(uuid()) @db.Uuid
+  courseId    String               @db.Uuid
+  teacherId   String               @db.Uuid
+  scheduledAt DateTime
+  status      ScheduledClassStatus @default(SCHEDULED)
+  tenantId    String               @db.Uuid
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  course   Course         @relation(fields: [courseId], references: [id])
+  teacher  LmsUser        @relation("TeacherScheduledClasses", fields: [teacherId], references: [id])
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessions ClassSession[]
+
+  @@index([tenantId, scheduledAt])
+  @@index([tenantId, status])
+  @@map("ScheduledClass")
+}
+
+model ClassSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  scheduledClassId String    @db.Uuid
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+  tenantId         String    @db.Uuid
+
+  scheduledClass ScheduledClass @relation(fields: [scheduledClassId], references: [id], onDelete: Cascade)
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  attendances    Attendance[]
+
+  @@index([tenantId])
+  @@map("ClassSession")
+}
+
+model Attendance {
+  id             String   @id @default(uuid()) @db.Uuid
+  classSessionId String   @db.Uuid
+  userId         String   @db.Uuid
+  present        Boolean  @default(true)
+  tenantId       String   @db.Uuid
+  markedAt       DateTime @default(now())
+
+  classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([classSessionId, userId])
+  @@index([tenantId])
+  @@map("Attendance")
+}
+
+////////////////////////////
+// USAGE LOGS (SOP §8 - Student Profile)
+////////////////////////////
+
+enum UsageLogType {
+  LOGIN
+  CONTENT_ACCESS
+  ASSESSMENT_ATTEMPT
+  TIME_SPENT
+}
+
+model UsageLog {
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @db.Uuid
+  type       UsageLogType
+  resourceId String?      @db.Uuid // course, lesson, assessment
+  metadata   Json? // e.g. { durationMinutes: 15 }
+  tenantId   String       @db.Uuid
+  createdAt  DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@index([tenantId, type])
+  @@index([tenantId, createdAt])
+  @@map("UsageLog")
 }

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
-import { courses, users } from "@/lib/mockData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentList } from "@/components/courses/StudentList";
 import { AssessmentManager } from "@/components/courses/AssessmentManager";
@@ -11,19 +10,25 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useCourseQuery } from "@/hooks/use-api";
 
 export default function CourseDetailPage() {
-  // Correctly unwrap params using React.use() as per Next.js 15+ guidance for client components,
-  // although useParams() hook from next/navigation handles this automatically.
-  // However, let's treat params as a possibility to be typed explicitly if passed as props,
-  // but here we use the hook which is standard for client components.
   const params = useParams();
-  const courseId = params?.courseId as string;
+  const courseId = (params?.courseId as string) ?? null;
+  const { data: course, isLoading } = useCourseQuery(courseId);
 
-  // Fallback if params aren't loaded yet? Usually useParams is sync enough for initial render in client.
+  const teacherName = course?.teacher?.name ?? "—";
+  const subjectName = course?.subject?.name ?? course?.subjectId ?? "—";
+  const className = course?.class?.name ?? "—";
 
-  const course = courses.find((c) => c.id === courseId);
-  const teacher = users.find((u) => u.id === course?.teacherId);
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-12 w-64 bg-muted animate-pulse rounded" />
+        <div className="h-8 w-full bg-muted animate-pulse rounded" />
+      </div>
+    );
+  }
 
   if (!course) {
     return <div>Course not found</div>;
@@ -36,25 +41,25 @@ export default function CourseDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline">{course.subject}</Badge>
+              <Badge variant="outline">{subjectName}</Badge>
               <span className="text-sm text-muted-foreground">
-                {course.code}
+                {className}
               </span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
               {course.title}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Grade {course.gradeLevel}
+              {course.description ?? "—"}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-right hidden sm:block">
-              <div className="font-medium">{teacher?.name}</div>
-              <div className="text-muted-foreground text-xs">Instuctor</div>
+              <div className="font-medium">{teacherName}</div>
+              <div className="text-muted-foreground text-xs">Instructor</div>
             </span>
             <Avatar className="h-10 w-10">
-              <AvatarFallback>{teacher?.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{teacherName.charAt(0)}</AvatarFallback>
             </Avatar>
           </div>
         </div>
@@ -79,7 +84,7 @@ export default function CourseDetailPage() {
         </TabsContent>
 
         <TabsContent value="students">
-          <StudentList />
+          <StudentList courseId={courseId} />
         </TabsContent>
 
         <TabsContent value="assessments" className="space-y-8">

@@ -3,15 +3,13 @@
 import {
   Card,
   CardContent,
-  // CardFooter,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { Course, users } from "@/lib/mockData";
+import type { Course } from "@/hooks/use-api";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 
@@ -20,7 +18,9 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course }: CourseCardProps) {
-  const teacher = users.find((u) => u.id === course.teacherId);
+  const teacherName = course.teacher?.name ?? "—";
+  const subjectName = course.subject?.name ?? course.subjectId;
+  const className = course.class?.name ?? "—";
 
   return (
     <Link href={`/courses/${course.id}`}>
@@ -28,30 +28,23 @@ export function CourseCard({ course }: CourseCardProps) {
         <div className="h-32 bg-slate-100 dark:bg-slate-800 relative rounded-t-lg flex items-center justify-center">
           <BookOpen className="h-10 w-10 text-slate-400" />
           <Badge className="absolute top-2 right-2" variant="secondary">
-            {course.subject}
+            {subjectName}
           </Badge>
         </div>
         <CardHeader className="pb-2">
           <CardTitle className="line-clamp-1 text-lg">{course.title}</CardTitle>
           <CardDescription className="line-clamp-1">
-            {course.code} • Grade {course.gradeLevel}
+            {className} • {subjectName}
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-2">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              <AvatarFallback>{teacher?.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{teacherName.charAt(0)}</AvatarFallback>
             </Avatar>
             <span className="text-sm text-muted-foreground">
-              {teacher?.name}
+              {teacherName}
             </span>
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progress</span>
-              <span>{course.progress || 0}%</span>
-            </div>
-            <Progress value={course.progress || 0} className="h-2" />
           </div>
         </CardContent>
       </Card>

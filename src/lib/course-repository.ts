@@ -532,3 +532,58 @@ async function isStudentEnrolled(
   // Enrollment = classId match
   return studentProfile.classId === course.classId;
 }
+
+export interface CourseStudent {
+  id: string;
+  name: string;
+  email: string;
+  status?: string;
+}
+
+/**
+ * Get students enrolled in a course (classId match)
+ * ADMIN: any course; TEACHER: own course only
+ */
+export async function getCourseStudents(
+  context: RBACContext,
+  courseId: string,
+): Promise<CourseStudent[]> {
+  const course = await prisma.course.findFirst({
+    where: {
+      id: courseId,
+      tenantId: context.tenantId,
+    },
+    select: { classId: true, teacherId: true },
+  });
+
+  if (!course) {
+    throw new ResourceNotFoundError("Course not found");
+  }
+
+  if (context.userRole === Role.TEACHER && course.teacherId !== context.userId) {
+    throw new ForbiddenError("Not authorized to view this course");
+  }
+
+  if (context.userRole !== Role.ADMIN && context.userRole !== Role.TEACHER) {
+    throw new ForbiddenError("Only admins and teachers can view course students");
+  }
+
+  const profiles = await prisma.studentProfile.findMany({
+    where: {
+      tenantId: context.tenantId,
+      classId: course.classId,
+    },
+    include: {
+      user: {
+        select: { id: true, name: true, email: true },
+      },
+    },
+  });
+
+  return profiles.map((p) => ({
+    id: p.user.id,
+    name: p.user.name,
+    email: p.user.email,
+    status: "Active",
+  }));
+}

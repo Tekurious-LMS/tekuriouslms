@@ -9,11 +9,37 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { users } from "@/lib/mockData";
+import { useCourseStudentsQuery } from "@/hooks/use-api";
 
-export function StudentList() {
-  const students = users.filter((u) => u.role === "Student");
+interface StudentListProps {
+  courseId: string | null;
+}
+
+export function StudentList({ courseId }: StudentListProps) {
+  const { data: students, isLoading } = useCourseStudentsQuery(courseId);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-8">
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-12 bg-muted animate-pulse rounded"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!students?.length) {
+    return (
+      <div className="rounded-md border p-8 text-center text-muted-foreground">
+        No students enrolled in this course.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border">
@@ -23,7 +49,6 @@ export function StudentList() {
             <TableHead>Student</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Active</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -40,13 +65,10 @@ export function StudentList() {
               <TableCell>{student.email}</TableCell>
               <TableCell>
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${student.status === "Active" ? "bg-green-50 text-green-700 ring-green-600/20" : "bg-red-50 text-red-700 ring-red-600/20"}`}
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${student.status === "Active" ? "bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-950/50 dark:text-green-400" : "bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-950/50 dark:text-red-400"}`}
                 >
-                  {student.status}
+                  {student.status ?? "Active"}
                 </span>
-              </TableCell>
-              <TableCell className="text-right">
-                <Switch checked={student.status === "Active"} />
               </TableCell>
             </TableRow>
           ))}

@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { toBackendRole, UI_ROLES } from "@/lib/role-mapping";
+
+const VALID_UI_ROLES = [
+  UI_ROLES.ADMIN,
+  UI_ROLES.TEACHER,
+  UI_ROLES.STUDENT,
+  UI_ROLES.PARENT,
+];
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,11 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { role } = body;
+    const { role: uiRole } = body;
 
-    if (!role || !["Student", "Teacher", "Admin", "Parent"].includes(role)) {
+    if (!uiRole || !VALID_UI_ROLES.includes(uiRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
+
+    // Map UI role to backend: Admin → Platform Admin
+    const role = toBackendRole(uiRole);
 
     const userId = session.user.id;
     const userEmail = session.user.email;
@@ -83,10 +94,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Redirect uses UI role (admin, teacher, etc.)
+    const redirectRole = uiRole.toLowerCase();
     return NextResponse.json({
       success: true,
-      role: role,
-      redirectTo: `/${role.toLowerCase()}/dashboard`,
+      role: uiRole,
+      redirectTo: `/${redirectRole}/dashboard`,
     });
   } catch (error: unknown) {
     if (error instanceof Error) {

@@ -11,8 +11,18 @@ import {
 } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { users } from "@/lib/mockData";
-import { useState } from "react";
+import { useUsersQuery } from "@/hooks/use-api";
+import { useState, useMemo, useEffect } from "react";
+
+function flattenStudents(
+  data:
+    | {
+        students: Array<{ id: string; name: string }>;
+      }
+    | undefined,
+) {
+  return data?.students ?? [];
+}
 
 interface AttendanceSheetProps {
   isOpen: boolean;
@@ -25,11 +35,21 @@ export function AttendanceSheet({
   onClose,
   classNameLabel,
 }: AttendanceSheetProps) {
-  const students = users.filter((u) => u.role === "Student");
-  // Mock initial attendance state
-  const [attendance, setAttendance] = useState<Record<string, boolean>>(
-    students.reduce((acc, student) => ({ ...acc, [student.id]: true }), {}),
-  );
+  const { data: usersData } = useUsersQuery(isOpen);
+  const students = useMemo(() => flattenStudents(usersData), [usersData]);
+  const [attendance, setAttendance] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (students.length > 0) {
+      setAttendance((prev) => {
+        const next = { ...prev };
+        for (const s of students) {
+          if (!(s.id in next)) next[s.id] = true;
+        }
+        return next;
+      });
+    }
+  }, [students]);
 
   const toggleAttendance = (studentId: string) => {
     setAttendance((prev) => ({ ...prev, [studentId]: !prev[studentId] }));
@@ -49,7 +69,12 @@ export function AttendanceSheet({
             <span className="font-medium text-sm">Student</span>
             <span className="font-medium text-sm">Present</span>
           </div>
-          {students.map((student) => (
+          {students.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">
+              No students in this tenant.
+            </p>
+          ) : (
+          students.map((student) => (
             <div key={student.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
@@ -58,11 +83,11 @@ export function AttendanceSheet({
                 <span className="text-sm font-medium">{student.name}</span>
               </div>
               <Checkbox
-                checked={attendance[student.id]}
+                checked={attendance[student.id] ?? true}
                 onCheckedChange={() => toggleAttendance(student.id)}
               />
             </div>
-          ))}
+          )))}
         </div>
         <SheetFooter>
           <Button onClick={onClose}>Save Attendance</Button>
