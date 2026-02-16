@@ -5,7 +5,7 @@ export async function GET(_request: NextRequest) {
   void _request;
   try {
     // Test Prisma connection
-    const userCount = await prisma.user.count();
+    const userCount = await prisma.lmsUser.count();
 
     return NextResponse.json({
       success: true,

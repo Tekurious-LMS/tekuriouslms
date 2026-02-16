@@ -16,7 +16,6 @@ import Image from "next/image";
 import { Loader2, X } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function SignUp() {
@@ -28,7 +27,6 @@ export default function SignUp() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [role, setRole] = useState("");
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +50,89 @@ export default function SignUp() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4">
+        <form
+          className="grid gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            // Validate passwords match
+            if (password !== passwordConfirmation) {
+              toast.error("Passwords do not match");
+              return;
+            }
+
+            // Validate password length
+            if (password.length < 8) {
+              toast.error("Password must be at least 8 characters long");
+              return;
+            }
+
+            // Validate password strength
+            const strongPasswordRegex =
+              /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+            if (!strongPasswordRegex.test(password)) {
+              toast.error(
+                "Password must include uppercase and lowercase letters, a number, and a special character",
+              );
+              return;
+            }
+            let imageBase64 = "";
+            if (image) {
+              try {
+                imageBase64 = await convertImageToBase64(image);
+              } catch {
+                toast.error(
+                  "Failed to process profile image. Please try again.",
+                );
+                return;
+              }
+            }
+            // Store role in sessionStorage for post-signup processing
+            if (role) {
+              sessionStorage.setItem("pendingRole", role);
+            }
+
+            await signUp.email({
+              email,
+              password,
+              name: `${firstName} ${lastName}`,
+              image: imageBase64 || undefined,
+              callbackURL: "/onboarding",
+              fetchOptions: {
+                onResponse: () => {
+                  setLoading(false);
+                },
+                onRequest: () => {
+                  setLoading(true);
+                },
+                onError: (ctx: {
+                  error: { code?: string; message?: string };
+                }) => {
+                  console.error("Sign-up error:", ctx.error);
+                  if (
+                    ctx.error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL"
+                  ) {
+                    toast.error(
+                      "An account with this email already exists. Please sign in instead.",
+                    );
+                  } else {
+                    toast.error(ctx.error.message || "Sign-up failed");
+                  }
+                  sessionStorage.removeItem("pendingRole");
+                },
+                onSuccess: (ctx) => {
+                  if (ctx?.session) {
+                    toast.success("Account created successfully!");
+                    // Redirect is handled by auth-client
+                  } else {
+                    toast.success(
+                      "Account created! Check your email to confirm before signing in.",
+                    );
+                  }
+                },
+              },
+            });
+          }}
+        >
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="first-name">First name</Label>
@@ -171,91 +251,14 @@ export default function SignUp() {
             </select>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-            onClick={async () => {
-              // Validate passwords match
-              if (password !== passwordConfirmation) {
-                toast.error("Passwords do not match");
-                return;
-              }
-
-              // Validate password length
-              if (password.length < 8) {
-                toast.error("Password must be at least 8 characters long");
-                return;
-              }
-
-              // Validate password strength
-              const strongPasswordRegex =
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-              if (!strongPasswordRegex.test(password)) {
-                toast.error(
-                  "Password must include uppercase and lowercase letters, a number, and a special character",
-                );
-                return;
-              }
-              let imageBase64 = "";
-              if (image) {
-                try {
-                  imageBase64 = await convertImageToBase64(image);
-                } catch {
-                  toast.error(
-                    "Failed to process profile image. Please try again.",
-                  );
-                  return;
-                }
-              }
-              // Store role in sessionStorage for post-signup processing
-              if (role) {
-                sessionStorage.setItem("pendingRole", role);
-              }
-
-              await signUp.email({
-                email,
-                password,
-                name: `${firstName} ${lastName}`,
-                image: imageBase64 || undefined,
-                callbackURL: "/onboarding",
-                fetchOptions: {
-                  onResponse: () => {
-                    setLoading(false);
-                  },
-                  onRequest: () => {
-                    setLoading(true);
-                  },
-                  onError: (ctx: {
-                    error: { code?: string; message?: string };
-                  }) => {
-                    console.error("Sign-up error:", ctx.error);
-                    if (
-                      ctx.error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL"
-                    ) {
-                      toast.error(
-                        "An account with this email already exists. Please sign in instead.",
-                      );
-                    } else {
-                      toast.error(ctx.error.message || "Sign-up failed");
-                    }
-                    sessionStorage.removeItem("pendingRole");
-                  },
-                  onSuccess: () => {
-                    toast.success("Account created successfully!");
-                    router.push("/onboarding");
-                  },
-                },
-              });
-            }}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
               "Create your account"
             )}
           </Button>
-        </div>
+        </form>
       </CardContent>
       <CardFooter>
         <div className="flex flex-col items-center w-full border-t py-4 gap-2">
@@ -267,9 +270,6 @@ export default function SignUp() {
             >
               Sign in
             </Link>
-          </p>
-          <p className="text-center text-xs text-neutral-500">
-            Secured by <span className="text-orange-400">better-auth.</span>
           </p>
         </div>
       </CardFooter>

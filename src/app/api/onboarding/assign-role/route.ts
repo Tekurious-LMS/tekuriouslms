@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
+    void request;
     // Get the authenticated session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth.api.getSession();
 
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
@@ -39,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Check if LmsUser already exists
     let lmsUser = await prisma.lmsUser.findUnique({
-      where: { betterAuthUserId: userId },
+      where: { authUserId: userId },
     });
 
     if (!lmsUser) {
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: userName,
           email: userEmail,
-          betterAuthUserId: userId,
+          authUserId: userId,
           tenantId: defaultTenant.id,
         },
       });
@@ -83,21 +81,6 @@ export async function POST(request: NextRequest) {
       console.log(
         `[ONBOARDING API] Assigned role ${role} to LmsUser ${lmsUser.id}`,
       );
-    }
-
-    // Try to update the Better Auth user's role field (optional, may fail if column doesn't exist)
-    try {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { role: role },
-      });
-      console.log(`[ONBOARDING API] Updated Better Auth user role to ${role}`);
-    } catch (updateError) {
-      console.warn(
-        "[ONBOARDING API] Could not update Better Auth user role field:",
-        updateError,
-      );
-      // This is non-critical, the LmsUser role is the source of truth
     }
 
     return NextResponse.json({

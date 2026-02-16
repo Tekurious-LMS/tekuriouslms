@@ -1,6 +1,5 @@
 // import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import {
   Users,
   GraduationCap,
@@ -43,9 +42,7 @@ import { ARAnalyticsSection } from "@/components/placeholders/ARAnalyticsSection
 import { AIInsightsSection } from "@/components/placeholders/AIInsightsSection";
 
 export default async function AdminDashboard() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth.api.getSession();
 
   if (
     !session ||

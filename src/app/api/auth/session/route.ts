@@ -1,26 +1,17 @@
 /**
  * GET /api/auth/session
  *
- * Get current user session context
- * All authenticated users can access this endpoint
+ * Get current user session with LMS enrichment (role, tenant).
+ * Does not require tenant context - used by useSession for initial load.
  */
 
-// import { NextRequest } from "next/server";
-import { createRBACApiHandler, jsonResponse } from "@/lib/api-helpers";
-import { Role } from "@/lib/rbac-types";
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
 
-export const GET = createRBACApiHandler(
-  [Role.ADMIN, Role.TEACHER, Role.STUDENT, Role.PARENT],
-  async (_req, context) => {
-    void _req;
-    return jsonResponse({
-      userId: context.userId,
-      role: context.userRole,
-      tenantId: context.tenantId,
-      tenantSlug: context.tenantSlug,
-      name: context.userName,
-      email: context.userEmail,
-      avatar: null, // Will be populated from user data
-    });
-  },
-);
+export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ user: null, session: null }, { status: 200 });
+  }
+  return NextResponse.json(session);
+}

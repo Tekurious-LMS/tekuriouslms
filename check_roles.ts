@@ -23,7 +23,7 @@ async function main() {
       users.forEach((u) => {
         console.log(`User: ${u.name} (${u.email})`);
         console.log(`  ID: ${u.id}`);
-        console.log(`  BetterAuthID: ${u.betterAuthUserId}`);
+        console.log(`  AuthID: ${u.authUserId}`);
         console.log(
           `  Roles: ${u.roles.map((r) => r.role.roleName).join(", ")}`,
         );

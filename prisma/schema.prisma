@@ -14,63 +14,8 @@ datasource db {
 }
 
 ////////////////////////////
-// BETTER AUTH TABLES
+// AUTH: Supabase Auth handles user/session - auth user id stored in LmsUser.authUserId
 ////////////////////////////
-
-model user {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  name          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  image         String?
-  role          String?  @default("Student") // Custom field for role-based auth
-
-  sessions session[]
-  accounts account[]
-
-  // Link to LMS User model
-  lmsUser LmsUser? @relation("BetterAuthUser")
-}
-
-model session {
-  id        String   @id @default(cuid())
-  expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model account {
-  id                    String    @id @default(cuid())
-  accountId             String
-  providerId            String
-  userId                String
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model verification {
-  id         String   @id @default(cuid())
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
 
 ////////////////////////////
 // TENANT / ORGANIZATION
@@ -127,9 +72,8 @@ model LmsUser {
   tenantId String @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  // Link to Better Auth user
-  betterAuthUserId String? @unique
-  betterAuthUser   user?   @relation("BetterAuthUser", fields: [betterAuthUserId], references: [id])
+  // Link to Supabase Auth user (auth.users.id)
+  authUserId String? @unique
 
   roles       UserRole[]
   enrollments Enrollment[]

@@ -1,6 +1,5 @@
 // import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import {
   BookOpen,
   Users,
@@ -32,9 +31,7 @@ import { ARCreationSection } from "@/components/placeholders/ARCreationSection";
 import { AIInsightsSection } from "@/components/placeholders/AIInsightsSection";
 
 export default async function TeacherDashboard() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth.api.getSession();
 
   if (
     !session ||
@@ -147,7 +144,7 @@ export default async function TeacherDashboard() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Welcome back, {session.user.name}! 👋
+                Welcome back, {session.user?.name ?? "there"}! 👋
               </h1>
               <p className="text-muted-foreground mt-2 text-lg">
                 Manage your courses, assessments, and track student progress.

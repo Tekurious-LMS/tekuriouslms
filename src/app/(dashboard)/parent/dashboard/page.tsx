@@ -1,6 +1,5 @@
 // import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import {
   // User,
   Bell,
@@ -35,9 +34,7 @@ import {
 import { ARParentSection } from "@/components/placeholders/ARParentSection";
 
 export default async function ParentDashboard() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth.api.getSession();
 
   if (
     !session ||

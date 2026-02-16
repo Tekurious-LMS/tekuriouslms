@@ -34,6 +34,7 @@ export default function OnboardingPage() {
         // Call the API to assign the role
         const response = await fetch("/api/onboarding/assign-role", {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },

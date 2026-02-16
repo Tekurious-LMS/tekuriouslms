@@ -16,7 +16,7 @@ export async function withTenantContext(
   handler: (context: TenantContext) => Promise<Response>,
 ): Promise<Response> {
   try {
-    // Get tenant slug from header (set by middleware)
+    // Get tenant slug from header (set by proxy)
     const tenantSlug = request.headers.get("x-tenant-slug");
 
     if (!tenantSlug) {
@@ -120,7 +120,7 @@ export async function withRBACContext(
     }
 
     // Step 2: Authentication
-    const session = await auth.api.getSession({ headers: request.headers });
+    const session = await auth.api.getSession();
 
     if (!session?.user) {
       throw new UnauthenticatedError("Authentication required");
@@ -129,7 +129,7 @@ export async function withRBACContext(
     // Get LmsUser with role information
     const lmsUser = await prisma.lmsUser.findFirst({
       where: {
-        betterAuthUserId: session.user.id,
+        authUserId: session.user.id,
         tenantId: tenant.id,
       },
       include: {
