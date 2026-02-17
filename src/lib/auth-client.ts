@@ -86,7 +86,10 @@ export const signIn = {
     }
     opts.fetchOptions?.onSuccess?.();
     if (opts.callbackURL) {
-      window.location.href = opts.callbackURL;
+      // Defer redirect to let Supabase finish saving the session (avoids AbortError from locks.ts)
+      setTimeout(() => {
+        window.location.href = opts.callbackURL!;
+      }, 100);
     }
   },
   social: async (opts: {

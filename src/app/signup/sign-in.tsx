@@ -18,14 +18,11 @@ import { signIn } from "@/lib/auth-client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const router = useRouter();
 
   return (
     <Card className="max-w-md">
@@ -82,7 +79,8 @@ export default function SignIn() {
             className="w-full"
             disabled={loading}
             onClick={async () => {
-              await signIn.email({
+              try {
+                await signIn.email({
                 email,
                 password,
                 rememberMe,
@@ -99,10 +97,17 @@ export default function SignIn() {
                   },
                   onSuccess: () => {
                     toast.success("Signed in successfully!");
-                    router.push("/dashboard"); // Redirector will handle role-based routing
+                    // Redirect is handled by auth-client via callbackURL; avoid router.push to prevent AbortError
                   },
                 },
               });
+              } catch (err) {
+                if (err instanceof Error && err.name === "AbortError") {
+                  // Supabase session save can abort during redirect; ignore
+                  return;
+                }
+                throw err;
+              }
             }}
           >
             {loading ? (
