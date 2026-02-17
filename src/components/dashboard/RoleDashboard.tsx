@@ -89,7 +89,7 @@ function StudentView() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoading ? "—" : courses?.length ?? 0}
+              {isLoading ? "—" : (courses?.length ?? 0)}
             </div>
           </CardContent>
         </Card>
@@ -135,9 +135,9 @@ function StudentView() {
             ) : courses?.length === 0 ? (
               <p className="text-muted-foreground">No courses enrolled.</p>
             ) : (
-              (courses ?? []).slice(0, 4).map((c) => (
-                <CourseCard key={c.id} course={c} />
-              ))
+              (courses ?? [])
+                .slice(0, 4)
+                .map((c) => <CourseCard key={c.id} course={c} />)
             )}
           </div>
         </div>

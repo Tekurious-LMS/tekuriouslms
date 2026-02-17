@@ -62,20 +62,24 @@ export function AttendanceSheet({
               No students in this tenant.
             </p>
           ) : (
-          students.map((student) => (
-            <div key={student.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium">{student.name}</span>
+            students.map((student) => (
+              <div
+                key={student.id}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{student.name}</span>
+                </div>
+                <Checkbox
+                  checked={attendance[student.id] ?? true}
+                  onCheckedChange={() => toggleAttendance(student.id)}
+                />
               </div>
-              <Checkbox
-                checked={attendance[student.id] ?? true}
-                onCheckedChange={() => toggleAttendance(student.id)}
-              />
-            </div>
-          )))}
+            ))
+          )}
         </div>
         <SheetFooter>
           <Button onClick={onClose}>Save Attendance</Button>

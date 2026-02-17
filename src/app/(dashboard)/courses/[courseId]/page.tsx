@@ -41,9 +41,7 @@ export default function CourseDetailPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline">{subjectName}</Badge>
-              <span className="text-sm text-muted-foreground">
-                {className}
-              </span>
+              <span className="text-sm text-muted-foreground">{className}</span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
               {course.title}

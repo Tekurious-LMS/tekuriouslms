@@ -28,7 +28,7 @@ export function useSession() {
   const [isPending, setIsPending] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
+    const cancelled = false;
 
     const init = async () => {
       try {
@@ -92,7 +92,9 @@ export const signIn = {
       }
     } catch (err) {
       opts.fetchOptions?.onError?.({
-        error: { message: err instanceof Error ? err.message : "Sign in failed" },
+        error: {
+          message: err instanceof Error ? err.message : "Sign in failed",
+        },
       });
     } finally {
       opts.fetchOptions?.onResponse?.();
@@ -145,7 +147,9 @@ export const signUp = {
     if (error) {
       opts.fetchOptions?.onError?.({
         error: {
-          code: error.message.includes("already") ? "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" : undefined,
+          code: error.message.includes("already")
+            ? "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL"
+            : undefined,
           message: error.message,
         },
       });

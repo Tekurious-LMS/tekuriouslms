@@ -20,84 +20,92 @@ import { UnauthenticatedError } from "./rbac-errors";
  *
  * @returns RBACContext or null if unauthenticated
  */
-export const getServerRBACContext = cache(async (): Promise<RBACContext | null> => {
-  const session = await auth.api.getSession();
+export const getServerRBACContext = cache(
+  async (): Promise<RBACContext | null> => {
+    const session = await auth.api.getSession();
 
-  if (!session?.user) {
-    return null;
-  }
+    if (!session?.user) {
+      return null;
+    }
 
-  let lmsUser: {
-    id: string;
-    email: string;
-    name: string;
-    tenant: { id: string; slug: string; name: string; themeConfig: unknown };
-    roles: { role: { roleName: string } }[];
-  } | null = null;
-  let tenant: { id: string; slug: string; name: string; themeConfig?: unknown } | null = null;
+    let lmsUser: {
+      id: string;
+      email: string;
+      name: string;
+      tenant: { id: string; slug: string; name: string; themeConfig: unknown };
+      roles: { role: { roleName: string } }[];
+    } | null = null;
+    let tenant: {
+      id: string;
+      slug: string;
+      name: string;
+      logo?: string | null;
+      themeConfig?: unknown;
+    } | null = null;
 
-  const tenantSlug = session.user.tenantSlug;
+    const tenantSlug = session.user.tenantSlug;
 
-  if (tenantSlug) {
-    tenant = await prisma.tenant.findUnique({
-      where: { slug: tenantSlug },
-    });
-    if (tenant) {
+    if (tenantSlug) {
+      tenant = await prisma.tenant.findUnique({
+        where: { slug: tenantSlug },
+      });
+      if (tenant) {
+        lmsUser = await prisma.lmsUser.findFirst({
+          where: {
+            authUserId: session.user.id,
+            tenantId: tenant.id,
+          },
+          include: {
+            roles: { include: { role: true } },
+            tenant: true,
+          },
+        });
+      }
+    }
+
+    // Fallback: find lmsUser by authUserId only (e.g. when tenantSlug missing or tenant lookup fails)
+    if (!lmsUser) {
       lmsUser = await prisma.lmsUser.findFirst({
-        where: {
-          authUserId: session.user.id,
-          tenantId: tenant.id,
-        },
+        where: { authUserId: session.user.id },
         include: {
           roles: { include: { role: true } },
           tenant: true,
         },
       });
+      if (lmsUser?.tenant) {
+        tenant = lmsUser.tenant;
+      }
     }
-  }
 
-  // Fallback: find lmsUser by authUserId only (e.g. when tenantSlug missing or tenant lookup fails)
-  if (!lmsUser) {
-    lmsUser = await prisma.lmsUser.findFirst({
-      where: { authUserId: session.user.id },
-      include: {
-        roles: { include: { role: true } },
-        tenant: true,
-      },
-    });
-    if (lmsUser?.tenant) {
-      tenant = lmsUser.tenant;
+    if (!lmsUser || !tenant) {
+      return null;
     }
-  }
 
-  if (!lmsUser || !tenant) {
-    return null;
-  }
+    const backendRole = lmsUser.roles[0]?.role?.roleName ?? null;
+    const userRole = toRBACRole(backendRole) as Role;
 
-  const backendRole = lmsUser.roles[0]?.role?.roleName ?? null;
-  const userRole = toRBACRole(backendRole) as Role;
+    if (!userRole) {
+      return null;
+    }
 
-  if (!userRole) {
-    return null;
-  }
-
-  return {
-    tenantId: tenant.id,
-    tenantSlug: tenant.slug,
-    tenantName: tenant.name,
-    tenantConfig:
-      tenant.themeConfig && typeof tenant.themeConfig === "object"
-        ? {
-            logo: tenant.logo ?? null,
-            theme: tenant.themeConfig as Record<string, unknown> | null,
-          }
-        : undefined,
-    userId: lmsUser.id as string,
-    userRole: userRole as Role,
-    userEmail: lmsUser.email as string,
-    userName: lmsUser.name as string,
-  };
-});
+    return {
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+      tenantName: tenant.name,
+      tenantConfig:
+        tenant.themeConfig && typeof tenant.themeConfig === "object"
+          ? {
+              logo: tenant.logo ?? null,
+              theme: tenant.themeConfig as Record<string, unknown> | null,
+            }
+          : undefined,
+      userId: lmsUser.id as string,
+      userRole: userRole as Role,
+      userEmail: lmsUser.email as string,
+      userName: lmsUser.name as string,
+    };
+  },
+);
 
 /**
  * Require RBAC context and role. Throws if unauthenticated or forbidden.

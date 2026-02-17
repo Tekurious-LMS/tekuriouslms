@@ -24,7 +24,9 @@ export async function withTenantContext(
       tenantSlug = session?.user?.tenantSlug ?? null;
     }
     if (!tenantSlug) {
-      throw new TenantNotFoundError("Tenant slug not found in request headers or session");
+      throw new TenantNotFoundError(
+        "Tenant slug not found in request headers or session",
+      );
     }
 
     // Validate tenant exists in database
@@ -122,7 +124,9 @@ export async function withRBACContext(
       tenantSlug = session.user.tenantSlug;
     }
     if (!tenantSlug) {
-      throw new TenantNotFoundError("Tenant slug not found. Provide x-tenant-slug header or ensure user has tenant.");
+      throw new TenantNotFoundError(
+        "Tenant slug not found. Provide x-tenant-slug header or ensure user has tenant.",
+      );
     }
 
     const tenant = await prisma.tenant.findUnique({

@@ -175,7 +175,10 @@ export async function getAssessments(
     });
 
     const classIds = parentMappings
-      .map((m: (typeof parentMappings)[number]) => m.student.studentProfile?.classId)
+      .map(
+        (m: (typeof parentMappings)[number]) =>
+          m.student.studentProfile?.classId,
+      )
       .filter((id: string | undefined): id is string => !!id);
 
     if (classIds.length === 0) {

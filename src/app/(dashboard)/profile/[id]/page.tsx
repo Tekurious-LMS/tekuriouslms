@@ -15,20 +15,35 @@ import { useUsersQuery } from "@/hooks/use-api";
 function flattenUsers(
   data:
     | {
-        admins: Array<{ id: string; name: string; email: string; role: string }>;
-        teachers: Array<{ id: string; name: string; email: string; role: string }>;
-        students: Array<{ id: string; name: string; email: string; role: string }>;
-        parents: Array<{ id: string; name: string; email: string; role: string }>;
+        admins: Array<{
+          id: string;
+          name: string;
+          email: string;
+          role: string;
+        }>;
+        teachers: Array<{
+          id: string;
+          name: string;
+          email: string;
+          role: string;
+        }>;
+        students: Array<{
+          id: string;
+          name: string;
+          email: string;
+          role: string;
+        }>;
+        parents: Array<{
+          id: string;
+          name: string;
+          email: string;
+          role: string;
+        }>;
       }
     | undefined,
 ) {
   if (!data) return [];
-  return [
-    ...data.admins,
-    ...data.teachers,
-    ...data.students,
-    ...data.parents,
-  ];
+  return [...data.admins, ...data.teachers, ...data.students, ...data.parents];
 }
 
 export default function StudentProfilePage() {
@@ -36,10 +51,7 @@ export default function StudentProfilePage() {
   const userId = params?.id as string | undefined;
   const { data: usersData, isLoading } = useUsersQuery(!!userId);
 
-  const allUsers = React.useMemo(
-    () => flattenUsers(usersData),
-    [usersData],
-  );
+  const allUsers = React.useMemo(() => flattenUsers(usersData), [usersData]);
   const user = React.useMemo(
     () => allUsers.find((u) => u.id === userId),
     [allUsers, userId],
@@ -69,12 +81,13 @@ export default function StudentProfilePage() {
         <div className="space-y-2 flex-1">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {user.name}
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tight">{user.name}</h1>
               <div className="flex items-center gap-2 mt-1">
                 <Badge>{user.role}</Badge>
-                <Badge variant="outline" className="text-green-600 border-green-600">
+                <Badge
+                  variant="outline"
+                  className="text-green-600 border-green-600"
+                >
                   Active
                 </Badge>
               </div>

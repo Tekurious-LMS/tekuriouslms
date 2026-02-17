@@ -60,7 +60,9 @@ export function AcademicHierarchy() {
                   >
                     <div className="flex items-center gap-2.5">
                       <BookOpen className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="text-sm font-medium">{subject.name}</span>
+                      <span className="text-sm font-medium">
+                        {subject.name}
+                      </span>
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                       <StructureActions />

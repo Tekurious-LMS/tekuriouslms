@@ -254,8 +254,8 @@ export async function getAllUsersByRole(context: RBACContext): Promise<{
       (r: UserWithRoles["roles"][number]) => r.role.roleName,
     );
     const rbacRole = toRBACRole(backendRoles[0] ?? null) as Role;
-    const displayRoles = user.roles.map((r) =>
-      normalizeRoleForUI(r.role.roleName) ?? r.role.roleName,
+    const displayRoles = user.roles.map(
+      (r) => normalizeRoleForUI(r.role.roleName) ?? r.role.roleName,
     );
     const userData = {
       ...user,

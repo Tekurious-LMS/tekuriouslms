@@ -47,10 +47,11 @@ async function main() {
   }
   const boardId = board.id;
 
-  const school = await prisma.school.findFirst({ where: { tenantId } })
-    || await prisma.school.create({
+  const school =
+    (await prisma.school.findFirst({ where: { tenantId } })) ||
+    (await prisma.school.create({
       data: { name: "Tekurious Academy", tenantId, boardId },
-    });
+    }));
   console.log("✅ Board:", board?.name, "| School:", school.name);
 
   // 4. Classes & Subjects
@@ -59,10 +60,13 @@ async function main() {
       const c = await prisma.class.findFirst({
         where: { name, tenantId },
       });
-      return c || prisma.class.create({
-        data: { name, tenantId, schoolId: school.id },
-      });
-    })
+      return (
+        c ||
+        prisma.class.create({
+          data: { name, tenantId, schoolId: school.id },
+        })
+      );
+    }),
   );
 
   const subjects = await Promise.all(
@@ -71,7 +75,7 @@ async function main() {
         where: { name, tenantId },
       });
       return s || prisma.subject.create({ data: { name, tenantId } });
-    })
+    }),
   );
   console.log("✅ Classes:", classes.length, "| Subjects:", subjects.length);
 
@@ -117,18 +121,21 @@ async function main() {
   // 7. Users with roles
   const teacherRoleId = roles["Teacher"] || Object.values(roles)[0];
   const studentRoleId = roles["Student"] || Object.values(roles)[1];
-  const adminRoleId = roles["Platform Admin"] || roles["School Admin"] || Object.values(roles)[0];
+  const adminRoleId =
+    roles["Platform Admin"] || roles["School Admin"] || Object.values(roles)[0];
 
-  const teacher = await prisma.lmsUser.findFirst({
-    where: { email: "teacher@tekurious.demo", tenantId },
-  }) || await prisma.lmsUser.create({
-    data: {
-      name: "Demo Teacher",
-      email: "teacher@tekurious.demo",
-      phone: "+91 9876543210",
-      tenantId,
-    },
-  });
+  const teacher =
+    (await prisma.lmsUser.findFirst({
+      where: { email: "teacher@tekurious.demo", tenantId },
+    })) ||
+    (await prisma.lmsUser.create({
+      data: {
+        name: "Demo Teacher",
+        email: "teacher@tekurious.demo",
+        phone: "+91 9876543210",
+        tenantId,
+      },
+    }));
 
   const students = await Promise.all(
     ["Alice", "Bob", "Charlie", "Diana", "Eve"].map(async (name, i) => {
@@ -136,21 +143,26 @@ async function main() {
       const u = await prisma.lmsUser.findFirst({
         where: { email, tenantId },
       });
-      return u || prisma.lmsUser.create({
-        data: { name, email, tenantId },
-      });
-    })
+      return (
+        u ||
+        prisma.lmsUser.create({
+          data: { name, email, tenantId },
+        })
+      );
+    }),
   );
 
-  const adminUser = await prisma.lmsUser.findFirst({
-    where: { email: "admin@tekurious.demo", tenantId },
-  }) || await prisma.lmsUser.create({
-    data: {
-      name: "Platform Admin",
-      email: "admin@tekurious.demo",
-      tenantId,
-    },
-  });
+  const adminUser =
+    (await prisma.lmsUser.findFirst({
+      where: { email: "admin@tekurious.demo", tenantId },
+    })) ||
+    (await prisma.lmsUser.create({
+      data: {
+        name: "Platform Admin",
+        email: "admin@tekurious.demo",
+        tenantId,
+      },
+    }));
 
   // Assign roles
   const assignRole = async (userId, roleId) => {
@@ -188,29 +200,33 @@ async function main() {
   console.log("✅ Student profiles");
 
   // 9. Courses
-  const course = await prisma.course.findFirst({
-    where: { tenantId, teacherId: teacher.id },
-  }) || await prisma.course.create({
-    data: {
-      title: "Mathematics - Class 9",
-      description: "Complete mathematics curriculum for Class 9",
-      teacherId: teacher.id,
-      classId: classes[0].id,
-      subjectId: subjects[0].id,
-      tenantId,
-    },
-  });
+  const course =
+    (await prisma.course.findFirst({
+      where: { tenantId, teacherId: teacher.id },
+    })) ||
+    (await prisma.course.create({
+      data: {
+        title: "Mathematics - Class 9",
+        description: "Complete mathematics curriculum for Class 9",
+        teacherId: teacher.id,
+        classId: classes[0].id,
+        subjectId: subjects[0].id,
+        tenantId,
+      },
+    }));
 
-  const module1 = await prisma.module.findFirst({
-    where: { courseId: course.id },
-  }) || await prisma.module.create({
-    data: {
-      title: "Module 1: Algebra",
-      orderIndex: 1,
-      courseId: course.id,
-      tenantId,
-    },
-  });
+  const module1 =
+    (await prisma.module.findFirst({
+      where: { courseId: course.id },
+    })) ||
+    (await prisma.module.create({
+      data: {
+        title: "Module 1: Algebra",
+        orderIndex: 1,
+        courseId: course.id,
+        tenantId,
+      },
+    }));
 
   const lessons = await prisma.lesson.findMany({
     where: { courseId: course.id },
@@ -261,18 +277,20 @@ async function main() {
   console.log("✅ Enrollments");
 
   // 11. Assessment with questions
-  const assessment = await prisma.assessment.findFirst({
-    where: { courseId: course.id },
-  }) || await prisma.assessment.create({
-    data: {
-      title: "Algebra Quiz 1",
-      type: "MCQ",
-      totalMarks: 100,
-      courseId: course.id,
-      tenantId,
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    },
-  });
+  const assessment =
+    (await prisma.assessment.findFirst({
+      where: { courseId: course.id },
+    })) ||
+    (await prisma.assessment.create({
+      data: {
+        title: "Algebra Quiz 1",
+        type: "MCQ",
+        totalMarks: 100,
+        courseId: course.id,
+        tenantId,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    }));
 
   const qCount = await prisma.assessmentQuestion.count({
     where: { assessmentId: assessment.id },
@@ -385,16 +403,18 @@ async function main() {
   console.log("✅ Analytics & Rankings");
 
   // 15. Subscription & Payment
-  const sub = await prisma.subscription.findFirst({
-    where: { schoolId: school.id },
-  }) || await prisma.subscription.create({
-    data: {
-      planName: "Premium",
-      status: "active",
-      schoolId: school.id,
-      tenantId,
-    },
-  });
+  const sub =
+    (await prisma.subscription.findFirst({
+      where: { schoolId: school.id },
+    })) ||
+    (await prisma.subscription.create({
+      data: {
+        planName: "Premium",
+        status: "active",
+        schoolId: school.id,
+        tenantId,
+      },
+    }));
 
   const payCount = await prisma.payment.count({
     where: { subscriptionId: sub.id },
@@ -419,7 +439,8 @@ async function main() {
     await prisma.notice.create({
       data: {
         title: "Welcome to Tekurious LMS",
-        content: "This is a sample notice. All students are requested to complete their assignments on time.",
+        content:
+          "This is a sample notice. All students are requested to complete their assignments on time.",
         category: "GENERAL",
         targetRoles: ["Student", "Teacher"],
         tenantId,

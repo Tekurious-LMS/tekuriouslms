@@ -560,12 +560,17 @@ export async function getCourseStudents(
     throw new ResourceNotFoundError("Course not found");
   }
 
-  if (context.userRole === Role.TEACHER && course.teacherId !== context.userId) {
+  if (
+    context.userRole === Role.TEACHER &&
+    course.teacherId !== context.userId
+  ) {
     throw new ForbiddenError("Not authorized to view this course");
   }
 
   if (context.userRole !== Role.ADMIN && context.userRole !== Role.TEACHER) {
-    throw new ForbiddenError("Only admins and teachers can view course students");
+    throw new ForbiddenError(
+      "Only admins and teachers can view course students",
+    );
   }
 
   const profiles = await prisma.studentProfile.findMany({

@@ -40,9 +40,7 @@ export function CourseCard({ course }: CourseCardProps) {
             <Avatar className="h-6 w-6">
               <AvatarFallback>{teacherName.charAt(0)}</AvatarFallback>
             </Avatar>
-            <span className="text-sm text-muted-foreground">
-              {teacherName}
-            </span>
+            <span className="text-sm text-muted-foreground">{teacherName}</span>
           </div>
         </CardContent>
       </Card>

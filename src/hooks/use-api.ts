@@ -125,7 +125,8 @@ const queryKeys = {
   assessments: ["assessments"] as const,
   structure: ["structure"] as const,
   teacherAnalytics: ["teacherAnalytics"] as const,
-  studentProgress: (studentId: string) => ["studentProgress", studentId] as const,
+  studentProgress: (studentId: string) =>
+    ["studentProgress", studentId] as const,
   parentStudents: ["parentStudents"] as const,
 };
 
@@ -149,9 +150,7 @@ export function useAuditLogsQuery(page = 1, enabled = true) {
   return useQuery({
     queryKey: queryKeys.auditLogs(page),
     queryFn: () =>
-      apiFetch<AuditLogsResponse>(
-        `/api/audit-logs?page=${page}&limit=10`,
-      ),
+      apiFetch<AuditLogsResponse>(`/api/audit-logs?page=${page}&limit=10`),
     enabled,
   });
 }
@@ -244,9 +243,9 @@ export function useParentStudentsQuery(enabled = true) {
   return useQuery({
     queryKey: queryKeys.parentStudents,
     queryFn: () =>
-      apiFetch<Array<ParentStudent & { student?: { id: string; name: string } }>>(
-        "/api/parents/students",
-      ),
+      apiFetch<
+        Array<ParentStudent & { student?: { id: string; name: string } }>
+      >("/api/parents/students"),
     enabled,
   });
 }
@@ -254,7 +253,8 @@ export function useParentStudentsQuery(enabled = true) {
 export function useInvalidateQueries() {
   const queryClient = useQueryClient();
   return {
-    invalidateUsers: () => queryClient.invalidateQueries({ queryKey: queryKeys.users }),
+    invalidateUsers: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.users }),
     invalidateAdminAnalytics: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.adminAnalytics }),
     invalidateAuditLogs: () =>

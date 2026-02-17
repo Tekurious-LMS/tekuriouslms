@@ -198,9 +198,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex h-16 items-center gap-2 px-2">
-            <div className="group-data-[collapsible=icon]:hidden">
-              <Logo />
-            </div>
+          <div className="group-data-[collapsible=icon]:hidden">
+            <Logo />
+          </div>
         </div>
         {currentSchool && (
           <div className="px-2 pb-3 group-data-[collapsible=icon]:hidden">

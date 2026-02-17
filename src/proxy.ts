@@ -54,17 +54,21 @@ export async function proxy(request: NextRequest) {
     const isDashboardRoute = dashboardRoutePattern.test(pathname);
 
     if (isDashboardRoute && !user) {
-      const redirectRes = NextResponse.redirect(new URL("/signup", request.url));
-      response.cookies.getAll().forEach(({ name, value }) =>
-        redirectRes.cookies.set(name, value),
+      const redirectRes = NextResponse.redirect(
+        new URL("/signup", request.url),
       );
+      response.cookies
+        .getAll()
+        .forEach(({ name, value }) => redirectRes.cookies.set(name, value));
       return redirectRes;
     }
 
     const res = NextResponse.next({
       request: { headers: requestHeaders },
     });
-    response.cookies.getAll().forEach(({ name, value }) => res.cookies.set(name, value));
+    response.cookies
+      .getAll()
+      .forEach(({ name, value }) => res.cookies.set(name, value));
     return res;
   }
 
@@ -79,9 +83,9 @@ export async function proxy(request: NextRequest) {
 
   if (isDashboardRoute && !user) {
     const redirectRes = NextResponse.redirect(new URL("/signup", request.url));
-    response.cookies.getAll().forEach(({ name, value }) =>
-      redirectRes.cookies.set(name, value),
-    );
+    response.cookies
+      .getAll()
+      .forEach(({ name, value }) => redirectRes.cookies.set(name, value));
     return redirectRes;
   }
 
@@ -89,7 +93,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

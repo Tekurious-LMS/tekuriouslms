@@ -81,26 +81,26 @@ export default function SignIn() {
             onClick={async () => {
               try {
                 await signIn.email({
-                email,
-                password,
-                rememberMe,
-                callbackURL: "/dashboard", // Redirector will handle role-based routing
-                fetchOptions: {
-                  onRequest: () => {
-                    setLoading(true);
+                  email,
+                  password,
+                  rememberMe,
+                  callbackURL: "/dashboard", // Redirector will handle role-based routing
+                  fetchOptions: {
+                    onRequest: () => {
+                      setLoading(true);
+                    },
+                    onResponse: () => {
+                      setLoading(false);
+                    },
+                    onError: (ctx: { error: { message?: string } }) => {
+                      toast.error(ctx.error?.message || "Failed to sign in");
+                    },
+                    onSuccess: () => {
+                      toast.success("Signed in successfully!");
+                      // Redirect is handled by auth-client via callbackURL; avoid router.push to prevent AbortError
+                    },
                   },
-                  onResponse: () => {
-                    setLoading(false);
-                  },
-                  onError: (ctx: { error: { message?: string } }) => {
-                    toast.error(ctx.error?.message || "Failed to sign in");
-                  },
-                  onSuccess: () => {
-                    toast.success("Signed in successfully!");
-                    // Redirect is handled by auth-client via callbackURL; avoid router.push to prevent AbortError
-                  },
-                },
-              });
+                });
               } catch (err) {
                 if (err instanceof Error && err.name === "AbortError") {
                   // Supabase session save can abort during redirect; ignore

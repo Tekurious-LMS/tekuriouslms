@@ -21,10 +21,7 @@ export function StudentList({ courseId }: StudentListProps) {
       <div className="rounded-md border p-8">
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-12 bg-muted animate-pulse rounded"
-            />
+            <div key={i} className="h-12 bg-muted animate-pulse rounded" />
           ))}
         </div>
       </div>

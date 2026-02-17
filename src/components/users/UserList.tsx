@@ -34,15 +34,17 @@ type UserItem = {
 };
 
 function flattenUsers(
-  data: { admins: UserItem[]; teachers: UserItem[]; students: UserItem[]; parents: UserItem[] } | undefined,
+  data:
+    | {
+        admins: UserItem[];
+        teachers: UserItem[];
+        students: UserItem[];
+        parents: UserItem[];
+      }
+    | undefined,
 ): UserItem[] {
   if (!data) return [];
-  return [
-    ...data.admins,
-    ...data.teachers,
-    ...data.students,
-    ...data.parents,
-  ];
+  return [...data.admins, ...data.teachers, ...data.students, ...data.parents];
 }
 
 export function UserList() {
