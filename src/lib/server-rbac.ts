@@ -27,38 +27,50 @@ export const getServerRBACContext = cache(async (): Promise<RBACContext | null> 
     return null;
   }
 
+  let lmsUser: {
+    id: string;
+    email: string;
+    name: string;
+    tenant: { id: string; slug: string; name: string; themeConfig: unknown };
+    roles: { role: { roleName: string } }[];
+  } | null = null;
+  let tenant: { id: string; slug: string; name: string; themeConfig?: unknown } | null = null;
+
   const tenantSlug = session.user.tenantSlug;
-  if (!tenantSlug) {
-    return null;
-  }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { slug: tenantSlug },
-  });
-
-  if (!tenant) {
-    return null;
-  }
-
-  if (session.user.tenantId && session.user.tenantId !== tenant.id) {
-    return null;
-  }
-
-  const lmsUser = await prisma.lmsUser.findFirst({
-    where: {
-      authUserId: session.user.id,
-      tenantId: tenant.id,
-    },
-    include: {
-      roles: {
-        include: {
-          role: true,
+  if (tenantSlug) {
+    tenant = await prisma.tenant.findUnique({
+      where: { slug: tenantSlug },
+    });
+    if (tenant) {
+      lmsUser = await prisma.lmsUser.findFirst({
+        where: {
+          authUserId: session.user.id,
+          tenantId: tenant.id,
         },
-      },
-    },
-  });
+        include: {
+          roles: { include: { role: true } },
+          tenant: true,
+        },
+      });
+    }
+  }
 
+  // Fallback: find lmsUser by authUserId only (e.g. when tenantSlug missing or tenant lookup fails)
   if (!lmsUser) {
+    lmsUser = await prisma.lmsUser.findFirst({
+      where: { authUserId: session.user.id },
+      include: {
+        roles: { include: { role: true } },
+        tenant: true,
+      },
+    });
+    if (lmsUser?.tenant) {
+      tenant = lmsUser.tenant;
+    }
+  }
+
+  if (!lmsUser || !tenant) {
     return null;
   }
 
