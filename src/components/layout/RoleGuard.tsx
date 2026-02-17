@@ -25,8 +25,11 @@ export function RoleGuard({ children }: { children: React.ReactNode }) {
 
     const allowedPrefix = allowedPrefixes[role];
     const isCommonRoute = pathname === "/settings" || pathname === "/profile";
+    const isAdminOnlyRoute =
+      role === "admin" &&
+      (pathname === "/users" || pathname.startsWith("/users/") || pathname === "/audit-logs" || pathname.startsWith("/audit-logs/"));
 
-    if (!pathname.startsWith(allowedPrefix) && !isCommonRoute) {
+    if (!pathname.startsWith(allowedPrefix) && !isCommonRoute && !isAdminOnlyRoute) {
       console.warn(
         `[RoleGuard] Unauthorized access to ${pathname} by role ${role}. Redirecting to ${allowedPrefix}/dashboard`,
       );
