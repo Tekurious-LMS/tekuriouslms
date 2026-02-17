@@ -19,13 +19,19 @@ export async function getSession(): Promise<{
 
   if (!user) return null;
 
-  const lmsUser = await prisma.lmsUser.findUnique({
-    where: { authUserId: user.id },
-    include: {
-      roles: { include: { role: true } },
-      tenant: { select: { id: true, name: true, slug: true } },
-    },
-  });
+  let lmsUser;
+  try {
+    lmsUser = await prisma.lmsUser.findUnique({
+      where: { authUserId: user.id },
+      include: {
+        roles: { include: { role: true } },
+        tenant: { select: { id: true, name: true, slug: true } },
+      },
+    });
+  } catch (err) {
+    console.error("[getSession] Prisma lookup failed:", err);
+    lmsUser = null;
+  }
 
   const backendRole = lmsUser?.roles?.[0]?.role?.roleName ?? null;
   const primaryRole = normalizeRoleForUI(backendRole) ?? backendRole;

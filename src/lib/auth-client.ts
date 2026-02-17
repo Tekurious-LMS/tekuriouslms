@@ -11,13 +11,20 @@ export interface EnrichedSession {
 }
 
 async function fetchEnrichedSession(): Promise<EnrichedSession | null> {
-  const res = await fetch("/api/auth/session", { credentials: "include" });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data as EnrichedSession;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const res = await fetch("/api/auth/session", {
+      credentials: "include",
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data as EnrichedSession;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
-
-const SESSION_CHECK_TIMEOUT_MS = 10_000;
 
 export function useSession() {
   const supabase = createClient();
@@ -29,11 +36,9 @@ export function useSession() {
 
     const init = async () => {
       try {
-        const timeoutPromise = new Promise<null>((_, reject) =>
-          setTimeout(() => reject(new Error("Session check timeout")), SESSION_CHECK_TIMEOUT_MS),
-        );
-        const userPromise = supabase.auth.getUser().then(({ data: { user } }) => user);
-        const user = await Promise.race([userPromise, timeoutPromise]);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (cancelled) return;
         if (!user) {
           setSession(null);
@@ -44,7 +49,9 @@ export function useSession() {
         setSession(enriched);
       } catch (err) {
         if (cancelled) return;
-        console.warn("[useSession] Session check failed:", err);
+        if (err instanceof Error && err.name !== "AbortError") {
+          console.warn("[useSession] Session check failed:", err);
+        }
         setSession(null);
       } finally {
         if (!cancelled) setIsPending(false);
@@ -96,21 +103,32 @@ export const signIn = {
   }) => {
     opts.fetchOptions?.onRequest?.();
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: opts.email,
-      password: opts.password,
-    });
-    opts.fetchOptions?.onResponse?.();
-    if (error) {
-      opts.fetchOptions?.onError?.({ error: { message: error.message } });
-      return;
-    }
-    opts.fetchOptions?.onSuccess?.();
-    if (opts.callbackURL) {
-      // Defer redirect to let Supabase finish saving the session (avoids AbortError from locks.ts)
-      setTimeout(() => {
-        window.location.href = opts.callbackURL!;
-      }, 100);
+    try {
+      const signInPromise = supabase.auth.signInWithPassword({
+        email: opts.email,
+        password: opts.password,
+      });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Sign in timed out")), 20_000),
+      );
+      const { error } = await Promise.race([signInPromise, timeoutPromise]);
+      if (error) {
+        opts.fetchOptions?.onError?.({ error: { message: error.message } });
+        return;
+      }
+      opts.fetchOptions?.onSuccess?.();
+      if (opts.callbackURL) {
+        // Defer redirect to let Supabase finish saving the session (avoids AbortError from locks.ts)
+        setTimeout(() => {
+          window.location.href = opts.callbackURL!;
+        }, 100);
+      }
+    } catch (err) {
+      opts.fetchOptions?.onError?.({
+        error: { message: err instanceof Error ? err.message : "Sign in failed" },
+      });
+    } finally {
+      opts.fetchOptions?.onResponse?.();
     }
   },
   social: async (opts: {
