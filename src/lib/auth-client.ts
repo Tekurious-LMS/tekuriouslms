@@ -11,11 +11,13 @@ export interface EnrichedSession {
 }
 
 async function fetchEnrichedSession(): Promise<EnrichedSession | null> {
-  const res = await fetch("/api/auth/session");
+  const res = await fetch("/api/auth/session", { credentials: "include" });
   if (!res.ok) return null;
   const data = await res.json();
   return data as EnrichedSession;
 }
+
+const SESSION_CHECK_TIMEOUT_MS = 10_000;
 
 export function useSession() {
   const supabase = createClient();
@@ -23,18 +25,30 @@ export function useSession() {
   const [isPending, setIsPending] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const init = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      try {
+        const timeoutPromise = new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error("Session check timeout")), SESSION_CHECK_TIMEOUT_MS),
+        );
+        const userPromise = supabase.auth.getUser().then(({ data: { user } }) => user);
+        const user = await Promise.race([userPromise, timeoutPromise]);
+        if (cancelled) return;
+        if (!user) {
+          setSession(null);
+          return;
+        }
+        const enriched = await fetchEnrichedSession();
+        if (cancelled) return;
+        setSession(enriched);
+      } catch (err) {
+        if (cancelled) return;
+        console.warn("[useSession] Session check failed:", err);
         setSession(null);
-        setIsPending(false);
-        return;
+      } finally {
+        if (!cancelled) setIsPending(false);
       }
-      const enriched = await fetchEnrichedSession();
-      setSession(enriched);
-      setIsPending(false);
     };
 
     init();
@@ -42,18 +56,25 @@ export function useSession() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setSession(null);
+          return;
+        }
+        const enriched = await fetchEnrichedSession();
+        setSession(enriched);
+      } catch {
         setSession(null);
-        return;
       }
-      const enriched = await fetchEnrichedSession();
-      setSession(enriched);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [supabase.auth]);
 
   return { data: session, isPending };
