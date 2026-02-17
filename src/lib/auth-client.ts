@@ -4,28 +4,24 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import type { SessionUser } from "./auth-types";
 
-/** Enriched session type matching the previous better-auth shape */
+/** Enriched session type with LMS role/tenant */
 export interface EnrichedSession {
   user: SessionUser;
   session: { id: string; userId: string; expiresAt: Date };
 }
 
-async function fetchEnrichedSession(): Promise<EnrichedSession | null> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15_000);
-  try {
-    const res = await fetch("/api/auth/session", {
-      credentials: "include",
-      signal: controller.signal,
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data as EnrichedSession;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+async function fetchSession(): Promise<EnrichedSession | null> {
+  const res = await fetch("/api/auth/session", { credentials: "include" });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data?.user) return null;
+  return data as EnrichedSession;
 }
 
+/**
+ * Client-side session hook. Relies on proxy-refreshed cookies.
+ * Fetches session from server API (single source of truth).
+ */
 export function useSession() {
   const supabase = createClient();
   const [session, setSession] = useState<EnrichedSession | null>(null);
@@ -36,22 +32,12 @@ export function useSession() {
 
     const init = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const data = await fetchSession();
         if (cancelled) return;
-        if (!user) {
-          setSession(null);
-          return;
-        }
-        const enriched = await fetchEnrichedSession();
-        if (cancelled) return;
-        setSession(enriched);
+        setSession(data);
       } catch (err) {
         if (cancelled) return;
-        if (err instanceof Error && err.name !== "AbortError") {
-          console.warn("[useSession] Session check failed:", err);
-        }
+        console.warn("[useSession] Session fetch failed:", err);
         setSession(null);
       } finally {
         if (!cancelled) setIsPending(false);
@@ -62,26 +48,11 @@ export function useSession() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
-          setSession(null);
-          return;
-        }
-        const enriched = await fetchEnrichedSession();
-        setSession(enriched);
-      } catch {
-        setSession(null);
-      }
+    } = supabase.auth.onAuthStateChange(() => {
+      fetchSession().then((data) => setSession(data));
     });
 
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
   return { data: session, isPending };
@@ -104,14 +75,10 @@ export const signIn = {
     opts.fetchOptions?.onRequest?.();
     const supabase = createClient();
     try {
-      const signInPromise = supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: opts.email,
         password: opts.password,
       });
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Sign in timed out")), 20_000),
-      );
-      const { error } = await Promise.race([signInPromise, timeoutPromise]);
       if (error) {
         opts.fetchOptions?.onError?.({ error: { message: error.message } });
         return;
@@ -138,13 +105,14 @@ export const signIn = {
   }) => {
     opts.fetchOptions?.onRequest?.();
     const supabase = createClient();
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(opts.callbackURL || "/dashboard")}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: opts.provider,
-      options: { redirectTo: opts.callbackURL || `${window.location.origin}/dashboard` },
+      options: { redirectTo },
     });
     opts.fetchOptions?.onResponse?.();
     if (error) return;
-    // OAuth redirects - no need to handle success
+    // OAuth redirects to callback, which exchanges code and redirects to next
   },
 };
 

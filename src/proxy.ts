@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { updateSession } from "@/lib/supabase/proxy";
 
 /**
  * Extract tenant slug from path-based URL
@@ -54,14 +54,17 @@ export async function proxy(request: NextRequest) {
     const isDashboardRoute = dashboardRoutePattern.test(pathname);
 
     if (isDashboardRoute && !user) {
-      const signupUrl = new URL("/signup", request.url);
-      return NextResponse.redirect(signupUrl);
+      const redirectRes = NextResponse.redirect(new URL("/signup", request.url));
+      response.cookies.getAll().forEach(({ name, value }) =>
+        redirectRes.cookies.set(name, value),
+      );
+      return redirectRes;
     }
 
     const res = NextResponse.next({
       request: { headers: requestHeaders },
     });
-    response.headers.getSetCookie?.().forEach((c) => res.headers.append("Set-Cookie", c));
+    response.cookies.getAll().forEach(({ name, value }) => res.cookies.set(name, value));
     return res;
   }
 
@@ -75,8 +78,11 @@ export async function proxy(request: NextRequest) {
   );
 
   if (isDashboardRoute && !user) {
-    const signupUrl = new URL("/signup", request.url);
-    return NextResponse.redirect(signupUrl);
+    const redirectRes = NextResponse.redirect(new URL("/signup", request.url));
+    response.cookies.getAll().forEach(({ name, value }) =>
+      redirectRes.cookies.set(name, value),
+    );
+    return redirectRes;
   }
 
   return response;
