@@ -4,12 +4,24 @@ import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentList } from "@/components/courses/StudentList";
 import { AssessmentManager } from "@/components/courses/AssessmentManager";
-import { StudentAttemptView } from "@/components/courses/StudentAttemptView";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCourseQuery } from "@/hooks/use-api";
+
+type LessonItem = {
+  id: string;
+  title: string;
+  contentType: string;
+  duration?: number | null;
+};
+
+type ModuleItem = {
+  id: string;
+  title: string;
+  lessons: LessonItem[];
+};
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -19,6 +31,8 @@ export default function CourseDetailPage() {
   const teacherName = course?.teacher?.name ?? "—";
   const subjectName = course?.subject?.name ?? course?.subjectId ?? "—";
   const className = course?.class?.name ?? "—";
+  const modules = ((course?.modules ?? []) as ModuleItem[]) ?? [];
+  const standaloneLessons = ((course?.lessons ?? []) as LessonItem[]) ?? [];
 
   if (isLoading) {
     return (
@@ -35,27 +49,20 @@ export default function CourseDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline">{subjectName}</Badge>
-              <span className="text-sm text-muted-foreground">
-                {className}
-              </span>
+              <span className="text-sm text-muted-foreground">{className}</span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {course.title}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {course.description ?? "—"}
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">{course.title}</h1>
+            <p className="text-muted-foreground mt-1">{course.description ?? "—"}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-right hidden sm:block">
-              <div className="font-medium">{teacherName}</div>
-              <div className="text-muted-foreground text-xs">Instructor</div>
+              <span className="font-medium block">{teacherName}</span>
+              <span className="text-muted-foreground text-xs">Instructor</span>
             </span>
             <Avatar className="h-10 w-10">
               <AvatarFallback>{teacherName.charAt(0)}</AvatarFallback>
@@ -73,13 +80,55 @@ export default function CourseDetailPage() {
         </TabsList>
 
         <TabsContent value="content" className="space-y-4">
-          <div className="p-8 border border-dashed rounded-lg text-center text-muted-foreground">
-            <h3 className="text-lg font-medium mb-2">Course Modules</h3>
-            <p>Content management UI (Videos, PDFs) would go here.</p>
-            <Button className="mt-4" variant="outline">
-              Add Module
-            </Button>
-          </div>
+          {modules.length === 0 && standaloneLessons.length === 0 ? (
+            <div className="p-8 border border-dashed rounded-lg text-center text-muted-foreground">
+              No lessons/modules available yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {modules.map((module) => (
+                <Card key={module.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{module.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {module.lessons.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No lessons in this module.</p>
+                    ) : (
+                      module.lessons.map((lesson) => (
+                        <div key={lesson.id} className="rounded border p-3 text-sm">
+                          <p className="font-medium">{lesson.title}</p>
+                          <p className="text-muted-foreground">
+                            {lesson.contentType}
+                            {lesson.duration ? ` • ${lesson.duration} min` : ""}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+
+              {standaloneLessons.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Standalone Lessons</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {standaloneLessons.map((lesson) => (
+                      <div key={lesson.id} className="rounded border p-3 text-sm">
+                        <p className="font-medium">{lesson.title}</p>
+                        <p className="text-muted-foreground">
+                          {lesson.contentType}
+                          {lesson.duration ? ` • ${lesson.duration} min` : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="students">
@@ -87,14 +136,7 @@ export default function CourseDetailPage() {
         </TabsContent>
 
         <TabsContent value="assessments" className="space-y-8">
-          <AssessmentManager />
-
-          <div className="mt-8">
-            <h3 className="text-lg font-medium mb-4">
-              Recent Student Activity (Mock)
-            </h3>
-            <StudentAttemptView />
-          </div>
+          <AssessmentManager courseId={courseId} />
         </TabsContent>
       </Tabs>
     </div>

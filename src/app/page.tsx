@@ -32,10 +32,13 @@ import {
 import { Footer } from "@/components/layout/Footer";
 import { Logo } from "@/components/ui/Logo";
 import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
 
 export default function LandingPage() {
   const { setTheme, theme } = useTheme();
   const router = useRouter();
+  const { data: session, isPending } = useSession();
+  const isAuthenticated = !!session;
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -73,16 +76,26 @@ export default function LandingPage() {
             <span className="sr-only">Toggle theme</span>
           </Button>
           <div className="flex items-center gap-2 ml-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/login")}
-            >
-              Login
-            </Button>
-            <Button size="sm" onClick={() => router.push("/users")}>
-              Get Started
-            </Button>
+            {isPending ? (
+              <div className="h-9 w-24 bg-muted animate-pulse rounded-lg" />
+            ) : isAuthenticated ? (
+              <Button size="sm" onClick={() => router.push("/dashboard")}>
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/login")}
+                >
+                  Login
+                </Button>
+                <Button size="sm" onClick={() => router.push("/signup")}>
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </nav>
       </header>
@@ -120,20 +133,32 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button
-                    size="lg"
-                    className="gap-2 shadow-lg shadow-primary/20"
-                    onClick={() => router.push("/users")}
-                  >
-                    Get Started <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => router.push("/login")}
-                  >
-                    Login
-                  </Button>
+                  {isAuthenticated ? (
+                    <Button
+                      size="lg"
+                      className="gap-2 shadow-lg shadow-primary/20"
+                      onClick={() => router.push("/dashboard")}
+                    >
+                      Go to Dashboard <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="lg"
+                        className="gap-2 shadow-lg shadow-primary/20"
+                        onClick={() => router.push("/signup")}
+                      >
+                        Get Started <ArrowRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => router.push("/login")}
+                      >
+                        Login
+                      </Button>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4">
                   <div className="flex items-center gap-1">

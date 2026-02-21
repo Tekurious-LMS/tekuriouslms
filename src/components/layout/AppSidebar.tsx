@@ -46,27 +46,9 @@ interface MenuRoute {
 const MENU_ITEMS: Record<string, MenuRoute[]> = {
   Student: [
     { label: "Dashboard", icon: LayoutDashboard, href: "/student/dashboard" },
-    {
-      label: "My Courses",
-      icon: BookOpen,
-      href: "/student/courses",
-      disabled: true,
-      badge: "Soon",
-    },
-    {
-      label: "Assessments",
-      icon: GraduationCap,
-      href: "/student/assessments",
-      disabled: true,
-      badge: "Soon",
-    },
-    {
-      label: "Progress",
-      icon: Activity,
-      href: "/student/progress",
-      disabled: true,
-      badge: "Soon",
-    },
+    { label: "My Courses", icon: BookOpen, href: "/courses" },
+    { label: "Assessments", icon: GraduationCap, href: "/assessments" },
+    { label: "Progress", icon: Activity, href: "/analytics" },
     {
       label: "Immersive Learning",
       icon: Cuboid,
@@ -77,13 +59,7 @@ const MENU_ITEMS: Record<string, MenuRoute[]> = {
   ],
   Teacher: [
     { label: "Dashboard", icon: LayoutDashboard, href: "/teacher/dashboard" },
-    {
-      label: "My Courses",
-      icon: BookOpen,
-      href: "/teacher/courses",
-      disabled: true,
-      badge: "Soon",
-    },
+    { label: "My Courses", icon: BookOpen, href: "/courses" },
     {
       label: "Lessons",
       icon: FileText,
@@ -91,20 +67,8 @@ const MENU_ITEMS: Record<string, MenuRoute[]> = {
       disabled: true,
       badge: "Soon",
     },
-    {
-      label: "Assessments",
-      icon: GraduationCap,
-      href: "/teacher/assessments",
-      disabled: true,
-      badge: "Soon",
-    },
-    {
-      label: "Class Progress",
-      icon: BarChart3,
-      href: "/teacher/progress",
-      disabled: true,
-      badge: "Soon",
-    },
+    { label: "Assessments", icon: GraduationCap, href: "/assessments" },
+    { label: "Class Progress", icon: BarChart3, href: "/analytics" },
     {
       label: "Immersive Learning",
       icon: Cuboid,
@@ -142,27 +106,9 @@ const MENU_ITEMS: Record<string, MenuRoute[]> = {
   ],
   Parent: [
     { label: "Dashboard", icon: LayoutDashboard, href: "/parent/dashboard" },
-    {
-      label: "Student Progress",
-      icon: Activity,
-      href: "/parent/progress",
-      disabled: true,
-      badge: "Soon",
-    },
-    {
-      label: "Assessments",
-      icon: GraduationCap,
-      href: "/parent/assessments",
-      disabled: true,
-      badge: "Soon",
-    },
-    {
-      label: "Notifications",
-      icon: BellRing,
-      href: "/parent/notifications",
-      disabled: true,
-      badge: "Soon",
-    },
+    { label: "Student Progress", icon: Activity, href: "/analytics" },
+    { label: "Assessments", icon: GraduationCap, href: "/assessments" },
+    { label: "Notifications", icon: BellRing, href: "/notices" },
     {
       label: "Immersive Preview",
       icon: Cuboid,
@@ -242,7 +188,7 @@ export function AppSidebar() {
                         </span>
                         {route.badge && (
                           <span className="ml-auto rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground group-data-[collapsible=icon]:hidden">
-                            Soon
+                            {route.badge}
                           </span>
                         )}
                       </SidebarMenuButton>

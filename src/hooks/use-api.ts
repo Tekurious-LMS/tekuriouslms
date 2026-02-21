@@ -115,6 +115,57 @@ export interface CourseStudent {
   status?: string;
 }
 
+export interface NoticeItem {
+  id: string;
+  title: string;
+  content: string;
+  category: "GENERAL" | "URGENT" | "ACADEMIC" | "ADMINISTRATIVE";
+  targetRoles: string[];
+  publishedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface ScheduledClassItem {
+  id: string;
+  scheduledAt: string;
+  status: "SCHEDULED" | "RUNNING" | "COMPLETED" | "CANCELLED";
+  course: {
+    id: string;
+    title: string;
+    class: { id: string; name: string };
+    subject: { id: string; name: string };
+  };
+  teacher: { id: string; name: string };
+}
+
+export interface PaymentItem {
+  id: string;
+  amount: number;
+  status: string;
+  paidAt: string;
+  subscription: {
+    id: string;
+    planName: string;
+    status: string;
+  };
+}
+
+export interface UserDetail {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  createdAt: string;
+  roles: string[];
+  studentProfile: {
+    classId: string;
+    className: string;
+    sectionId: string | null;
+  } | null;
+  linkedStudents: Array<{ id: string; name: string; email: string }>;
+}
+
 const queryKeys = {
   users: ["users"] as const,
   adminAnalytics: ["adminAnalytics"] as const,
@@ -123,7 +174,11 @@ const queryKeys = {
   course: (id: string) => ["course", id] as const,
   courseStudents: (courseId: string) => ["courseStudents", courseId] as const,
   assessments: ["assessments"] as const,
+  notices: ["notices"] as const,
+  schedule: ["schedule"] as const,
+  payments: ["payments"] as const,
   structure: ["structure"] as const,
+  userDetail: (id: string) => ["userDetail", id] as const,
   teacherAnalytics: ["teacherAnalytics"] as const,
   studentProgress: (studentId: string) => ["studentProgress", studentId] as const,
   parentStudents: ["parentStudents"] as const,
@@ -192,6 +247,38 @@ export function useAssessmentsQuery(enabled = true) {
     queryKey: queryKeys.assessments,
     queryFn: () => apiFetch<unknown[]>("/api/assessments"),
     enabled,
+  });
+}
+
+export function useNoticesQuery(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.notices,
+    queryFn: () => apiFetch<NoticeItem[]>("/api/notices"),
+    enabled,
+  });
+}
+
+export function useScheduleQuery(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.schedule,
+    queryFn: () => apiFetch<ScheduledClassItem[]>("/api/schedule"),
+    enabled,
+  });
+}
+
+export function usePaymentsQuery(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.payments,
+    queryFn: () => apiFetch<PaymentItem[]>("/api/payments"),
+    enabled,
+  });
+}
+
+export function useUserDetailQuery(userId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.userDetail(userId ?? ""),
+    queryFn: () => apiFetch<UserDetail>(`/api/users/${userId}`),
+    enabled: enabled && !!userId,
   });
 }
 
@@ -269,6 +356,12 @@ export function useInvalidateQueries() {
       }),
     invalidateAssessments: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.assessments }),
+    invalidateNotices: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.notices }),
+    invalidateSchedule: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.schedule }),
+    invalidatePayments: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.payments }),
     invalidateStructure: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.structure }),
   };

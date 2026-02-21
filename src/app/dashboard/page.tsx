@@ -32,9 +32,8 @@ export default function DashboardRedirector() {
       const normalizedRole = role.toLowerCase();
       router.replace(`/${normalizedRole}/dashboard`);
     } else {
-      // Role not yet assigned (onboarding incomplete), redirect to a default or onboarding page
-      // For now, let's redirect to student dashboard as fallback
-      router.replace("/student/dashboard");
+      // Role not assigned yet, continue onboarding instead of unsafe default role fallback
+      router.replace("/onboarding");
     }
   }, [session, isPending, currentRole, router]);
 

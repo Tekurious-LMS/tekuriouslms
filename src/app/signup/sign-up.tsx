@@ -27,6 +27,7 @@ export default function SignUp() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [role, setRole] = useState("");
+  const [tenantSlug, setTenantSlug] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +91,11 @@ export default function SignUp() {
             if (role) {
               sessionStorage.setItem("pendingRole", role);
             }
+            if (tenantSlug.trim()) {
+              sessionStorage.setItem("pendingTenantSlug", tenantSlug.trim());
+            } else {
+              sessionStorage.removeItem("pendingTenantSlug");
+            }
 
             await signUp.email({
               email,
@@ -118,6 +124,7 @@ export default function SignUp() {
                     toast.error(ctx.error.message || "Sign-up failed");
                   }
                   sessionStorage.removeItem("pendingRole");
+                  sessionStorage.removeItem("pendingTenantSlug");
                 },
                 onSuccess: (ctx) => {
                   if (ctx?.session) {
@@ -249,6 +256,16 @@ export default function SignUp() {
               <option value="Parent">Parent - Monitor student progress</option>
               <option value="Admin">Admin - Manage school and users</option>
             </select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="tenantSlug">Organization Slug (optional)</Label>
+            <Input
+              id="tenantSlug"
+              placeholder="example-school"
+              value={tenantSlug}
+              onChange={(e) => setTenantSlug(e.target.value)}
+            />
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

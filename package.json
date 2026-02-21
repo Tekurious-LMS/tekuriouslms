@@ -7,6 +7,10 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "clean:next": "node -e \"require('node:fs').rmSync('.next', { recursive: true, force: true })\"",
+    "typecheck": "npm run clean:next && tsc --noEmit",
+    "verify:phase1": "npm run lint && npm run typecheck && npm run build",
+    "verify:rbac": "npm run typecheck",
     "postinstall": "prisma generate",
     "onboard:tenant": "ts-node scripts/onboard-tenant.ts"
   },
@@ -49,7 +53,7 @@
     "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
-    "prisma": "^7.4.0",
+    "prisma": "^6.19.2",
     "tailwindcss": "^4.1.18",
     "ts-node": "^10.9.2",
     "typescript": "^5"

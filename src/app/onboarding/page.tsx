@@ -19,8 +19,9 @@ export default function OnboardingPage() {
   useEffect(() => {
     async function completeOnboarding() {
       try {
-        // Get the pending role from sessionStorage
+        // Get pending signup selections from sessionStorage
         const pendingRole = sessionStorage.getItem("pendingRole");
+        const pendingTenantSlug = sessionStorage.getItem("pendingTenantSlug");
 
         if (!pendingRole) {
           // No pending role, redirect to dashboard (will use default or show error)
@@ -38,7 +39,10 @@ export default function OnboardingPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ role: pendingRole }),
+          body: JSON.stringify({
+            role: pendingRole,
+            tenantSlug: pendingTenantSlug || undefined,
+          }),
         });
 
         const data = await response.json();
@@ -51,6 +55,7 @@ export default function OnboardingPage() {
 
         // Clear the pending role
         sessionStorage.removeItem("pendingRole");
+        sessionStorage.removeItem("pendingTenantSlug");
 
         // Redirect to role-specific dashboard
         setStatus("Success! Redirecting...");

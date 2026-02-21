@@ -1,66 +1,106 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { NoticeCard } from "@/components/notices/NoticeCard";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { useNoticesQuery, useInvalidateQueries } from "@/hooks/use-api";
+import { apiFetch } from "@/lib/api-client";
+import { useTenant } from "@/contexts/TenantContext";
 
-const notices = [
-  {
-    id: 1,
-    title: "School Closed for Holi",
-    date: "March 24, 2024",
-    category: "Admin",
-    content:
-      "The school will remain closed on March 25th on account of Holi. Classes resume on Tuesday.",
-  },
-  {
-    id: 2,
-    title: "Science Fair Registration",
-    date: "March 20, 2024",
-    category: "Event",
-    content:
-      "Students from grades 8-10 can register for the annual Science Fair. Theme: Sustainable Energy.",
-  },
-  {
-    id: 3,
-    title: "Term 3 Exam Schedule",
-    date: "March 15, 2024",
-    category: "Academic",
-    content:
-      "The final term examinations will commence from April 10th. Detailed schedule has been mailed.",
-  },
-  {
-    id: 4,
-    title: "Guest Lecture: AI in Future",
-    date: "March 12, 2024",
-    category: "Academic",
-    content:
-      "Dr. Rao from IIT Bombay will be delivering a lecture on Artificial Intelligence for Grade 11 & 12.",
-  },
-  {
-    id: 5,
-    title: "Annual Sports Day",
-    date: "Feb 28, 2024",
-    category: "Event",
-    content:
-      "Join us for a day of fun and athletics at the main stadium. Parents are welcome.",
-  },
-];
+const CATEGORY_LABELS = {
+  GENERAL: "Admin",
+  ACADEMIC: "Academic",
+  ADMINISTRATIVE: "Admin",
+  URGENT: "Event",
+} as const;
 
 export default function NoticesPage() {
+  const { data: notices, isLoading } = useNoticesQuery();
+  const { currentRole } = useTenant();
+  const { invalidateNotices } = useInvalidateQueries();
+  const isPublisher = (currentRole ?? "").toLowerCase() === "admin" || (currentRole ?? "").toLowerCase() === "teacher";
+
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const categorized = useMemo(() => {
+    const list = notices ?? [];
+    return {
+      all: list,
+      academic: list.filter((n) => n.category === "ACADEMIC"),
+      events: list.filter((n) => n.category === "URGENT"),
+      admin: list.filter((n) => n.category === "GENERAL" || n.category === "ADMINISTRATIVE"),
+    };
+  }, [notices]);
+
+  const publishNotice = async () => {
+    if (!title.trim() || !content.trim()) return;
+    setSaving(true);
+    try {
+      await apiFetch("/api/notices", {
+        method: "POST",
+        body: JSON.stringify({
+          title: title.trim(),
+          content: content.trim(),
+          category: "GENERAL",
+          targetRoles: ["All"],
+          publishNow: true,
+        }),
+      });
+      await invalidateNotices();
+      setTitle("");
+      setContent("");
+      toast.success("Notice published");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to publish notice");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Notice Board</h1>
           <p className="text-muted-foreground">
             Updates, announcements, and events.
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Post Notice
-        </Button>
       </div>
+
+      {isPublisher && (
+        <div className="rounded-lg border p-4 space-y-3">
+          <h2 className="font-semibold">Publish Notice</h2>
+          <Input
+            placeholder="Notice title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Textarea
+            placeholder="Notice content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+          <div className="flex justify-end">
+            <Button onClick={publishNotice} disabled={saving || !title.trim() || !content.trim()}>
+              <Plus className="mr-2 h-4 w-4" />
+              {saving ? "Publishing..." : "Post Notice"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="all" className="space-y-6">
         <TabsList>
@@ -70,41 +110,31 @@ export default function NoticesPage() {
           <TabsTrigger value="admin">Admin</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {notices.map((notice) => (
-              <NoticeCard
-                key={notice.id}
-                title={notice.title}
-                date={notice.date}
-                category={notice.category as "Academic" | "Event" | "Admin"}
-                content={notice.content}
-              />
-            ))}
-          </div>
-        </TabsContent>
-        {["academic", "events", "admin"].map((cat) => (
-          <TabsContent key={cat} value={cat} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {notices
-                .filter((n) =>
-                  n.category
-                    .toLowerCase()
-                    .includes(cat === "events" ? "event" : cat),
-                )
-                .map((notice) => (
+        {(["all", "academic", "events", "admin"] as const).map((tab) => (
+          <TabsContent key={tab} value={tab} className="space-y-4">
+            {isLoading ? (
+              <p className="text-muted-foreground">Loading notices...</p>
+            ) : categorized[tab].length === 0 ? (
+              <p className="text-muted-foreground">No notices available.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {categorized[tab].map((notice) => (
                   <NoticeCard
                     key={notice.id}
                     title={notice.title}
-                    date={notice.date}
-                    category={notice.category as "Academic" | "Event" | "Admin"}
+                    date={new Date(
+                      notice.publishedAt ?? notice.createdAt,
+                    ).toLocaleDateString()}
+                    category={CATEGORY_LABELS[notice.category]}
                     content={notice.content}
                   />
                 ))}
-            </div>
+              </div>
+            )}
           </TabsContent>
         ))}
       </Tabs>
     </div>
   );
 }
+

@@ -21,7 +21,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { role: uiRole } = body;
+    const { role: uiRole, tenantSlug, tenantId } = body as {
+      role?: string;
+      tenantSlug?: string;
+      tenantId?: string;
+    };
 
     if (!uiRole || !VALID_UI_ROLES.includes(uiRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
@@ -34,22 +38,39 @@ export async function POST(request: NextRequest) {
     const userEmail = session.user.email;
     const userName = session.user.name || "New User";
 
-    // Get default tenant (consistent with auth.ts - use slug 'default')
-    const defaultTenant = await prisma.tenant.findUnique({
-      where: { slug: "default" },
-    });
-
-    if (!defaultTenant) {
-      return NextResponse.json(
-        { error: "Default tenant not found. Please contact administrator." },
-        { status: 500 },
-      );
-    }
-
     // Check if LmsUser already exists
     let lmsUser = await prisma.lmsUser.findUnique({
       where: { authUserId: userId },
     });
+
+    const resolveTenant = async () => {
+      if (tenantId) {
+        return prisma.tenant.findUnique({ where: { id: tenantId } });
+      }
+      if (tenantSlug) {
+        return prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+      }
+      if (lmsUser?.tenantId) {
+        return prisma.tenant.findUnique({ where: { id: lmsUser.tenantId } });
+      }
+      if (process.env.DEFAULT_TENANT_SLUG) {
+        return prisma.tenant.findUnique({
+          where: { slug: process.env.DEFAULT_TENANT_SLUG },
+        });
+      }
+      return null;
+    };
+
+    const selectedTenant = await resolveTenant();
+    if (!selectedTenant) {
+      return NextResponse.json(
+        {
+          error:
+            "Tenant is required. Provide tenantSlug or configure DEFAULT_TENANT_SLUG.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (!lmsUser) {
       // Create LmsUser
@@ -58,10 +79,18 @@ export async function POST(request: NextRequest) {
           name: userName,
           email: userEmail,
           authUserId: userId,
-          tenantId: defaultTenant.id,
+          tenantId: selectedTenant.id,
         },
       });
       console.log(`[ONBOARDING API] Created LmsUser: ${lmsUser.id}`);
+    } else if (lmsUser.tenantId !== selectedTenant.id) {
+      return NextResponse.json(
+        {
+          error:
+            "User is already associated with a different tenant. Tenant reassignment is blocked here.",
+        },
+        { status: 409 },
+      );
     }
 
     // Check if role is already assigned
@@ -99,6 +128,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       role: uiRole,
+      tenant: {
+        id: selectedTenant.id,
+        slug: selectedTenant.slug,
+        name: selectedTenant.name,
+      },
       redirectTo: `/${redirectRole}/dashboard`,
     });
   } catch (error: unknown) {

@@ -1,34 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
+import { createRBACApiHandler, jsonResponse } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@/lib/rbac-types";
 
-export async function GET(_request: NextRequest) {
-  void _request;
+export const GET = createRBACApiHandler([Role.ADMIN], async (_req, context) => {
+  void _req;
+  void context;
   try {
-    // Test Prisma connection
     const userCount = await prisma.lmsUser.count();
 
-    return NextResponse.json({
+    return jsonResponse({
       success: true,
       message: "Prisma connection works",
       userCount,
     });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-          stack: error.stack,
-        },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json(
+    return jsonResponse(
       {
         success: false,
-        error: "Unknown error",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      500,
     );
   }
-}
+});
