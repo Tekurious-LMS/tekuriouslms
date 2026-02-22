@@ -1,29 +1,15 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient() {
-  // Use DATABASE_URL (Supabase Transaction pooler with ?pgbouncer=true for serverless)
-  const connectionString = process.env.DATABASE_URL;
-
-  if (!connectionString) {
+  if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL environment variable is not set");
   }
 
-  const pool = new Pool({
-    connectionString,
-    max: 10,
-    connectionTimeoutMillis: 10_000,
-    idleTimeoutMillis: 30_000,
-  });
-  const adapter = new PrismaPg(pool);
-
   return new PrismaClient({
-    adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 }

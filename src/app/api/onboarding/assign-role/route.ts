@@ -8,7 +8,13 @@ const VALID_UI_ROLES = [
   UI_ROLES.TEACHER,
   UI_ROLES.STUDENT,
   UI_ROLES.PARENT,
-];
+] as const;
+
+type ValidUiRole = (typeof VALID_UI_ROLES)[number];
+
+function isValidUiRole(role: string): role is ValidUiRole {
+  return (VALID_UI_ROLES as readonly string[]).includes(role);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +33,7 @@ export async function POST(request: NextRequest) {
       tenantId?: string;
     };
 
-    if (!uiRole || !VALID_UI_ROLES.includes(uiRole)) {
+    if (!uiRole || !isValidUiRole(uiRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
